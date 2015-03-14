@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/sfynxcm7rfetdhjn/branch/master?svg=true)](https://ci.appveyor.com/project/RamblingCookieMonster/invoke-sqlitequery)
+
 Invoke-SQLiteQuery PowerShell Module
 =============
 
@@ -39,21 +41,21 @@ Query a SQLite database, using parameters:
     $Database = "C:\Names.SQLite"
 
     Invoke-SqliteQuery -Query $Query -Database $Database
-    
+
 # View table info
     Invoke-SqliteQuery -Database $Database -Query "PRAGMA table_info(NAMES)"
-    
+
 # Insert some data, use parameters for the fullname and birthdate
     $query = "INSERT INTO NAMES (fullname, surname, givenname, birthdate) VALUES (@full, 'Cookie', 'Monster', @BD)"
-    
+
     Invoke-SqliteQuery -Database $Database -Query $query -SqlParameters @{
         full = "Cookie Monster"
         BD   = (get-date).addyears(-3)
     }
-    
+
 # View the data
     Invoke-SqliteQuery -Database $Database -Query "SELECT * FROM NAMES"
-    
+
 ```
 
 #Notes
