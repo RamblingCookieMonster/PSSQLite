@@ -63,3 +63,7 @@ Query a SQLite database, using parameters:
 This isn't a fully featured module or function.
 
 I'm planning to write about using SQL from a systems administrator or engineer standpoint.  I personally stick to [MSSQL and Invoke-Sqlcmd2](https://ramblingcookiemonster.wordpress.com/2014/03/12/sql-for-powershell-for-sql-newbies/), but want to provide an abstracted means to perform this without the prerequisite of an accessible MSSQL instance.
+
+Check out Jim Christopher's [SQLite PowerShell Provider](https://psqlite.codeplex.com/).  It's offers more functionality and flexibility than this repository.
+
+Credit to Chad Miller, Justin Dearing, Paul Bryson, Joel Bennett, and Dave Wyatt for the code carried over from Invoke-Sqlcmd2.
