@@ -19,7 +19,7 @@ CompanyName = ''
 # Copyright = '(c) 2014 ramblingcookiemonster. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Work with DiskPart'
+Description = 'Query SQLite databases'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '2.0'

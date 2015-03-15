@@ -10,14 +10,14 @@
 
         Help details below borrowed from Invoke-Sqlcmd, may be inaccurate here.
 
-    .PARAMETER Database
-        Path to one ore more SQLite databases to query 
+    .PARAMETER DataSource
+        Path to one ore more SQLite data sources to query 
 
     .PARAMETER Query
         Specifies a query to be run.
 
     .PARAMETER InputFile
-        Specifies a file to be used as the query input to Invoke-MySQLQuery. Specify the full path to the file.
+        Specifies a file to be used as the query input to Invoke-SqliteQuery. Specify the full path to the file.
 
     .PARAMETER QueryTimeout
         Specifies the number of seconds before the queries time out.
@@ -37,12 +37,15 @@
             -Query "SELECT ServerName FROM tblServerInfo WHERE ServerName LIKE @ServerName"
             -SqlParameters @{"ServerName = "c-is-hyperv-1"}
 
-    .PARAMETER AppendDatabase
-        If specified, append the SQLite database path to PSObject or DataRow output
+    .PARAMETER SQLiteConnection
+        An existing SQLiteConnection to use.  We do not close this connection upon completed query.
+
+    .PARAMETER AppendDataSource
+        If specified, append the SQLite data source path to PSObject or DataRow output
 
     .INPUTS 
-        Database 
-            You can pipe database paths to Invoke-SQLiteQuery.  The query will execute against each database.
+        DataSource 
+            You can pipe DataSource paths to Invoke-SQLiteQuery.  The query will execute against each Data Source.
 
     .OUTPUTS
        As PSObject:     System.Management.Automation.PSCustomObject
@@ -55,13 +58,13 @@
 
         #
         # First, we create a database and a table
-            $Query = "CREATE TABLE NAMES (fullname VARCHAR(100) PRIMARY KEY, surname VARCHAR(50), givenname VARCHAR(50), BirthDate DATETIME)"
+            $Query = "CREATE TABLE NAMES (fullname VARCHAR(20) PRIMARY KEY, surname TEXT, givenname TEXT, BirthDate DATETIME)"
             $Database = "C:\Names.SQLite"
         
-            Invoke-SqliteQuery -Query $Query -Database $Database
+            Invoke-SqliteQuery -Query $Query -DataSource $Database
 
         # We have a database, and a table, let's view the table info
-            Invoke-SqliteQuery -Database $Database -Query "PRAGMA table_info(NAMES)"
+            Invoke-SqliteQuery -DataSource $Database -Query "PRAGMA table_info(NAMES)"
                 
                 cid name      type         notnull dflt_value pk
                 --- ----      ----         ------- ---------- --
@@ -72,13 +75,13 @@
 
         # Insert some data, use parameters for the fullname and birthdate
             $query = "INSERT INTO NAMES (fullname, surname, givenname, birthdate) VALUES (@full, 'Cookie', 'Monster', @BD)"
-            Invoke-SqliteQuery -Database $Database -Query $query -SqlParameters @{
+            Invoke-SqliteQuery -DataSource $Database -Query $query -SqlParameters @{
                 full = "Cookie Monster"
                 BD   = (get-date).addyears(-3)
             }
 
         # Check to see if we inserted the data:
-            Invoke-SqliteQuery -Database $Database -Query "SELECT * FROM NAMES"
+            Invoke-SqliteQuery -DataSource $Database -Query "SELECT * FROM NAMES"
                 
                 fullname       surname givenname BirthDate            
                 --------       ------- --------- ---------            
@@ -86,20 +89,20 @@
 
         # Insert another entry with too many characters in the fullname.
         # Illustrate that SQLite data types may be misleading:
-            Invoke-SqliteQuery -Database $Database -Query $query -SqlParameters @{
-                full = "Cookie Monster$('!' * 100)"
+            Invoke-SqliteQuery -DataSource $Database -Query $query -SqlParameters @{
+                full = "Cookie Monster$('!' * 20)"
                 BD   = (get-date).addyears(-3)
             }
 
-            Invoke-SqliteQuery -Database $Database -Query "SELECT * FROM NAMES"
+            Invoke-SqliteQuery -DataSource $Database -Query "SELECT * FROM NAMES"
 
-                fullname                       surname givenname BirthDate            
-                --------                       ------- --------- ---------            
-                Cookie Monster                 Cookie  Monster   3/14/2012 12:27:13 PM
-                Cookie Monster![TRUNCATED...]! Cookie  Monster   3/14/2012 12:29:32 PM
+                fullname              surname givenname BirthDate            
+                --------              ------- --------- ---------            
+                Cookie Monster        Cookie  Monster   3/14/2012 12:27:13 PM
+                Cookie Monster![...]! Cookie  Monster   3/14/2012 12:29:32 PM
 
     .EXAMPLE
-        Invoke-SqliteQuery -Database $Database -Query "SELECT * FROM NAMES" -AppendDatabase  
+        Invoke-SqliteQuery -DataSource C:\NAMES.SQLite -Query "SELECT * FROM NAMES" -AppendDataSource
 
             fullname       surname givenname BirthDate             Database       
             --------       ------- --------- ---------             --------       
@@ -111,6 +114,9 @@
         https://github.com/RamblingCookieMonster/Invoke-SQLiteQuery
 
     .LINK
+        New-SQLiteConnection
+    
+    .LINK
         https://www.sqlite.org/datatype3.html
 
     .LINK
@@ -120,36 +126,55 @@
         SQL
     #>
 
-    [CmdletBinding( DefaultParameterSetName='Query' )]
+    [CmdletBinding( DefaultParameterSetName='Ins-Que' )]
     [OutputType([System.Management.Automation.PSCustomObject],[System.Data.DataRow],[System.Data.DataTable],[System.Data.DataTableCollection],[System.Data.DataSet])]
     param(
-        [Parameter( Position=0,
+        [Parameter( ParameterSetName='Ins-Que',
+                    Position=0,
                     Mandatory=$true,
                     ValueFromPipeline=$true,
                     ValueFromPipelineByPropertyName=$true,
                     ValueFromRemainingArguments=$false,
-                    HelpMessage='SQLite Database Path required...' )]
-        [Alias( 'Instance', 'Instances', 'ServerInstance', 'Server', 'Servers','cn','Path','File' )]
-        [validatescript({
-            $Parent = Split-Path $_ -Parent
-            Test-Path $Parent -ErrorAction Stop
-        })]
-        [string[]]
-        $Database,
-    
-        [Parameter( Position=1,
+                    HelpMessage='SQLite Data Source required...' )]
+        [Parameter( ParameterSetName='Ins-Fil',
+                    Position=0,
                     Mandatory=$true,
+                    ValueFromPipeline=$true,
                     ValueFromPipelineByPropertyName=$true,
                     ValueFromRemainingArguments=$false,
-                    ParameterSetName='Query' )]
+                    HelpMessage='SQLite Data Source required...' )]
+        [Alias( 'Instance', 'Instances', 'ServerInstance', 'Server', 'Servers','cn','Path','File','FullName','Database' )]
+        [validatescript({
+            $Parent = Split-Path $_ -Parent
+            ( $_ -match ":MEMORY:|^WHAT$" -or (Test-Path $Parent -ErrorAction Stop) )
+            
+        })]
+        [string[]]
+        $DataSource,
+    
+        [Parameter( ParameterSetName='Ins-Que',
+                    Position=1,
+                    Mandatory=$true,
+                    ValueFromPipelineByPropertyName=$true,
+                    ValueFromRemainingArguments=$false )]
+        [Parameter( ParameterSetName='Con-Que',
+                    Position=1,
+                    Mandatory=$true,
+                    ValueFromPipelineByPropertyName=$true,
+                    ValueFromRemainingArguments=$false )]
         [string]
         $Query,
         
-        [Parameter( Position=1,
+        [Parameter( ParameterSetName='Ins-Fil',
+                    Position=1,
                     Mandatory=$true,
                     ValueFromPipelineByPropertyName=$true,
-                    ValueFromRemainingArguments=$false,
-                    ParameterSetName="File")]
+                    ValueFromRemainingArguments=$false )]
+        [Parameter( ParameterSetName='Con-Fil',
+                    Position=1,
+                    Mandatory=$true,
+                    ValueFromPipelineByPropertyName=$true,
+                    ValueFromRemainingArguments=$false )]
         [ValidateScript({ Test-Path $_ })]
         [string]
         $InputFile,
@@ -179,21 +204,44 @@
         [Parameter( Position=5,
                     Mandatory=$false )]
         [switch]
-        $AppendDatabase,
+        $AppendDataSource,
 
         [Parameter( Position=6,
                     Mandatory=$false )]
         [validatescript({Test-Path $_ })]
-        [string]$AssemblyPath = $SQLiteAssembly
+        [string]$AssemblyPath = $SQLiteAssembly,
 
+        [Parameter( ParameterSetName = 'Con-Que',
+                    Position=9,
+                    Mandatory=$false,
+                    ValueFromPipeline=$false,
+                    ValueFromPipelineByPropertyName=$false,
+                    ValueFromRemainingArguments=$false )]
+        [Parameter( ParameterSetName = 'Con-Fil',
+                    Position=9,
+                    Mandatory=$false,
+                    ValueFromPipeline=$false,
+                    ValueFromPipelineByPropertyName=$false,
+                    ValueFromRemainingArguments=$false )]
+        [Alias( 'Connection', 'Conn' )]
+        #We don't strongly type this to avoid issues with types not being loaded....
+        [System.Data.SQLite.SQLiteConnection]
+        $SQLiteConnection
     ) 
 
     Begin
     {
-        
-        if( -not ($Library = Add-Type -path $AssemblyPath -PassThru -ErrorAction stop) )
+        #Assembly, should already be covered by psm1
+        Try
         {
-            Throw "This function requires the ADO.NET driver for SQLite:`n`thttp://system.data.sqlite.org/index.html/doc/trunk/www/downloads.wiki"
+            [void][System.Data.SQLite.SQLiteConnection]
+        }
+        Catch
+        {
+            if( -not ($Library = Add-Type -path $SQLiteAssembly -PassThru -ErrorAction stop) )
+            {
+                Throw "This module requires the ADO.NET driver for SQLite:`n`thttp://system.data.sqlite.org/index.html/doc/trunk/www/downloads.wiki"
+            }
         }
 
         if ($InputFile) 
@@ -202,7 +250,7 @@
             $Query =  [System.IO.File]::ReadAllText("$filePath") 
         }
 
-        Write-Verbose "Running Invoke-MySQLQuery with ParameterSet '$($PSCmdlet.ParameterSetName)'.  Performing query '$Query'"
+        Write-Verbose "Running Invoke-SQLiteQuery with ParameterSet '$($PSCmdlet.ParameterSetName)'.  Performing query '$Query'"
 
         If($As -eq "PSObject")
         {
@@ -251,34 +299,66 @@
             }
         }
 
+        #Handle existing connections
+        if($PSBoundParameters.Keys -contains "SQLiteConnection")
+        {
+            if($SQLiteConnection.State -notlike "Open")
+            {
+                Try
+                {
+                    $SQLiteConnection.Open()
+                    
+                }
+                Catch
+                {
+                    Throw $_
+                }
+            }
+
+            if($SQLiteConnection.state -notlike "Open")
+            {
+                Throw "SQLiteConnection is not open:`n$($SQLiteConnection | Out-String)"
+            }
+
+            $DataSource = @("WHAT")
+        }
+
     }
     Process
     {
-
-        foreach($DB in $Database)
+        foreach($DB in $DataSource)
         {
-            if(Test-Path $DB)
+
+            if($PSBoundParameters.Keys -contains "SQLiteConnection")
             {
-                Write-Verbose "Querying existing database '$DB'"
+                $Conn = $SQLiteConnection
             }
             else
             {
-                Write-Verbose "Creating andn querying database '$DB'"
-            }
 
-            $ConnectionString = "Data Source={0}" -f $DB
+                if(Test-Path $DB)
+                {
+                    Write-Verbose "Querying existing Data Source '$DB'"
+                }
+                else
+                {
+                    Write-Verbose "Creating andn querying Data Source '$DB'"
+                }
+
+                $ConnectionString = "Data Source={0}" -f $DB
 	    
-            $conn = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
-            Write-Debug "ConnectionString $ConnectionString"
+                $conn = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
+                Write-Debug "ConnectionString $ConnectionString"
     
-            Try
-            {
-                $conn.Open() 
-            }
-            Catch
-            {
-                Write-Error $_
-                continue
+                Try
+                {
+                    $conn.Open() 
+                }
+                Catch
+                {
+                    Write-Error $_
+                    continue
+                }
             }
 
             $cmd = $Conn.CreateCommand()
@@ -307,13 +387,18 @@
             Try
             {
                 [void]$da.fill($ds)
-                $conn.Close()
+                if($PSBoundParameters.Keys -notcontains "SQLiteConnection")
+                {
+                    $conn.Close()
+                }
             }
             Catch
             { 
                 $Err = $_
-                $conn.Close()
-
+                if($PSBoundParameters.Keys -notcontains "SQLiteConnection")
+                {
+                    $conn.Close()
+                }
                 switch ($ErrorActionPreference.tostring())
                 {
                     {'SilentlyContinue','Ignore' -contains $_} {}
@@ -323,15 +408,15 @@
                 }              
             }
 
-            if($AppendDatabase)
+            if($AppendDataSource)
             {
                 #Basics from Chad Miller
                 $Column =  New-Object Data.DataColumn
-                $Column.ColumnName = "Database"
+                $Column.ColumnName = "Datasource"
                 $ds.Tables[0].Columns.Add($Column)
                 Foreach($row in $ds.Tables[0])
                 {
-                    $row.Database = $DB
+                    $row.Datasource = $DB
                 }
             }
 
