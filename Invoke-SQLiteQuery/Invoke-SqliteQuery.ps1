@@ -68,9 +68,9 @@
                 
                 cid name      type         notnull dflt_value pk
                 --- ----      ----         ------- ---------- --
-                  0 fullname  VARCHAR(100)       0             1
-                  1 surname   VARCHAR(50)        0             0
-                  2 givenname VARCHAR(50)        0             0
+                  0 fullname  VARCHAR(20)        0             1
+                  1 surname   TEXT               0             0
+                  2 givenname TEXT               0             0
                   3 BirthDate DATETIME           0             0
 
         # Insert some data, use parameters for the fullname and birthdate
@@ -109,6 +109,21 @@
             Cookie Monster Cookie  Monster   3/14/2012 12:55:55 PM C:\Names.SQLite
 
         # Append Database column (path) to each result
+
+    .EXAMPLE
+        Invoke-SqliteQuery -DataSource C:\Names.SQLite -InputFile C:\Query.sql
+
+        # Invoke SQL from an input file
+
+    .EXAMPLE
+        $Connection = New-SQLiteConnection -DataSource :MEMORY: 
+        Invoke-SqliteQuery -SQLiteConnection $Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
+        Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
+        Invoke-SqliteQuery -SQLiteConnection $Connection -Query "PRAGMA STATS"
+
+        # Execute a query against an existing SQLiteConnection
+            # Create a connection to a SQLite data source in memory
+            # Create a table in the memory based datasource, verify it exists with PRAGMA STATS
 
     .LINK
         https://github.com/RamblingCookieMonster/Invoke-SQLiteQuery
@@ -414,9 +429,21 @@
                 $Column =  New-Object Data.DataColumn
                 $Column.ColumnName = "Datasource"
                 $ds.Tables[0].Columns.Add($Column)
+
+                Try
+                {
+                    #Someone better at regular expression, feel free to tackle this
+                    $Conn.ConnectionString -match "Data Source=(?<DataSource>.*);"
+                    $Datasrc = $Matches.DataSource.split(";")[0]
+                }
+                Catch
+                {
+                    $Datasrc = $DB
+                }
+
                 Foreach($row in $ds.Tables[0])
                 {
-                    $row.Datasource = $DB
+                    $row.Datasource = $Datasrc
                 }
             }
 

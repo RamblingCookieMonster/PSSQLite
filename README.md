@@ -19,6 +19,9 @@ Create a SQLite database and table:
 Query a SQLite database, using parameters:
   * ![Query a SQLite database](/Media/Query.png)
 
+Create a SQLite connection, use it for subsequent queries:
+  * ![Create a SQLite connection, use it](/Media/Connection.png)
+
 #Instructions
 
 ```powershell
@@ -37,24 +40,24 @@ Query a SQLite database, using parameters:
     Get-Help Invoke-SQLiteQuery -Full
 
 # Create a database and a table
-    $Query = "CREATE TABLE NAMES (fullname VARCHAR(100) PRIMARY KEY, surname VARCHAR(50), givenname VARCHAR(50), BirthDate DATETIME)"
-    $Database = "C:\Names.SQLite"
+    $Query = "CREATE TABLE NAMES (fullname VARCHAR(20) PRIMARY KEY, surname TEXT, givenname TEXT, BirthDate DATETIME)"
+    $DataSource = "C:\Names.SQLite"
 
-    Invoke-SqliteQuery -Query $Query -Database $Database
+    Invoke-SqliteQuery -Query $Query -DataSource $DataSource
 
 # View table info
-    Invoke-SqliteQuery -Database $Database -Query "PRAGMA table_info(NAMES)"
+    Invoke-SqliteQuery -DataSource $DataSource -Query "PRAGMA table_info(NAMES)"
 
 # Insert some data, use parameters for the fullname and birthdate
     $query = "INSERT INTO NAMES (fullname, surname, givenname, birthdate) VALUES (@full, 'Cookie', 'Monster', @BD)"
 
-    Invoke-SqliteQuery -Database $Database -Query $query -SqlParameters @{
+    Invoke-SqliteQuery -DataSource $DataSource -Query $query -SqlParameters @{
         full = "Cookie Monster"
         BD   = (get-date).addyears(-3)
     }
 
 # View the data
-    Invoke-SqliteQuery -Database $Database -Query "SELECT * FROM NAMES"
+    Invoke-SqliteQuery -DataSource $DataSource -Query "SELECT * FROM NAMES"
 
 ```
 
@@ -64,6 +67,6 @@ This isn't a fully featured module or function.
 
 I'm planning to write about using SQL from a systems administrator or engineer standpoint.  I personally stick to [MSSQL and Invoke-Sqlcmd2](https://ramblingcookiemonster.wordpress.com/2014/03/12/sql-for-powershell-for-sql-newbies/), but want to provide an abstracted means to perform this without the prerequisite of an accessible MSSQL instance.
 
-Check out Jim Christopher's [SQLite PowerShell Provider](https://psqlite.codeplex.com/).  It's offers more functionality and flexibility than this repository.
+Check out Jim Christopher's [SQLite PowerShell Provider](https://psqlite.codeplex.com/).  It offers more functionality and flexibility than this repository.
 
 Credit to Chad Miller, Justin Dearing, Paul Bryson, Joel Bennett, and Dave Wyatt for the code carried over from Invoke-Sqlcmd2.
