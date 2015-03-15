@@ -18,6 +18,9 @@
     .PARAMETER ReadOnly
         If specified, open SQLite data source as read only
 
+    .PARAMETER Open
+        We open the connection by default.  You can use this parameter to create a connection without opening it.
+
     .OUTPUTS
         System.Data.SQLite.SQLiteConnection
 
@@ -120,7 +123,7 @@
                 }
             }
 
-            write-Verbose "Created SQLConnection:`n$($Conn | Out-String)"
+            write-Verbose "Created SQLiteConnection:`n$($Conn | Out-String)"
 
             $Conn
         }

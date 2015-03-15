@@ -73,6 +73,21 @@ Describe "Invoke-SQLiteQuery PS$PSVersion" {
             $Script:Connection.close()
         }
 
+        It 'should respect PowerShell expectations for null' {
+            
+            #The SQL folks out there might be annoyed by this, but we want to treat DBNulls as null to allow expected PowerShell operator behavior.
+
+            $Connection = New-SQLiteConnection -DataSource :MEMORY: 
+            Invoke-SqliteQuery -SQLiteConnection $Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
+            Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
+            Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID) VALUES (2);"
+
+            @( Invoke-SqliteQuery -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" -As DataRow | Where{$_.fullname}).count |
+                Should Be 2
+
+            @( Invoke-SqliteQuery -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" | Where{$_.fullname} ).count |
+                Should Be 1
+        }
     }
 }
 

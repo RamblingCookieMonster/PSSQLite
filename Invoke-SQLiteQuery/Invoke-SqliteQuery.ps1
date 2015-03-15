@@ -125,6 +125,27 @@
             # Create a connection to a SQLite data source in memory
             # Create a table in the memory based datasource, verify it exists with PRAGMA STATS
 
+    .EXAMPLE
+        $Connection = New-SQLiteConnection -DataSource :MEMORY: 
+        Invoke-SqliteQuery -SQLiteConnection $Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
+        Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
+        Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID) VALUES (2);"
+
+        # We now have two entries, only one has a fullname.  Despite this, the following command returns both; very un-PowerShell!
+        Invoke-SqliteQuery -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" -As DataRow | Where{$_.fullname}
+
+            OrderID fullname      
+            ------- --------      
+                  1 Cookie Monster
+                  2               
+
+        # Using the default -As PSObject, we can get PowerShell-esque behavior:
+        Invoke-SqliteQuery -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" | Where{$_.fullname}
+
+            OrderID fullname                                                                         
+            ------- --------                                                                         
+                  1 Cookie Monster 
+
     .LINK
         https://github.com/RamblingCookieMonster/Invoke-SQLiteQuery
 
@@ -141,33 +162,41 @@
         SQL
     #>
 
-    [CmdletBinding( DefaultParameterSetName='Ins-Que' )]
+    [CmdletBinding( DefaultParameterSetName='Src-Que' )]
     [OutputType([System.Management.Automation.PSCustomObject],[System.Data.DataRow],[System.Data.DataTable],[System.Data.DataTableCollection],[System.Data.DataSet])]
     param(
-        [Parameter( ParameterSetName='Ins-Que',
+        [Parameter( ParameterSetName='Src-Que',
                     Position=0,
                     Mandatory=$true,
                     ValueFromPipeline=$true,
                     ValueFromPipelineByPropertyName=$true,
                     ValueFromRemainingArguments=$false,
                     HelpMessage='SQLite Data Source required...' )]
-        [Parameter( ParameterSetName='Ins-Fil',
+        [Parameter( ParameterSetName='Src-Fil',
                     Position=0,
                     Mandatory=$true,
                     ValueFromPipeline=$true,
                     ValueFromPipelineByPropertyName=$true,
                     ValueFromRemainingArguments=$false,
                     HelpMessage='SQLite Data Source required...' )]
-        [Alias( 'Instance', 'Instances', 'ServerInstance', 'Server', 'Servers','cn','Path','File','FullName','Database' )]
+        [Alias('Path','File','FullName','Database')]
         [validatescript({
+            #This should match memory, or the parent path should exist
             $Parent = Split-Path $_ -Parent
-            ( $_ -match ":MEMORY:|^WHAT$" -or (Test-Path $Parent -ErrorAction Stop) )
-            
+            if(
+                $_ -match ":MEMORY:|^WHAT$" -or
+                ( $Parent -and (Test-Path $Parent))
+            ){
+                $True
+            }
+            else {
+                Throw "Invalid datasource '$_'.`nThis must match :MEMORY:, or '$Parent' must exist"
+            }
         })]
         [string[]]
         $DataSource,
     
-        [Parameter( ParameterSetName='Ins-Que',
+        [Parameter( ParameterSetName='Src-Que',
                     Position=1,
                     Mandatory=$true,
                     ValueFromPipelineByPropertyName=$true,
@@ -180,7 +209,7 @@
         [string]
         $Query,
         
-        [Parameter( ParameterSetName='Ins-Fil',
+        [Parameter( ParameterSetName='Src-Fil',
                     Position=1,
                     Mandatory=$true,
                     ValueFromPipelineByPropertyName=$true,
@@ -207,7 +236,7 @@
                     ValueFromRemainingArguments=$false )]
         [ValidateSet("DataSet", "DataTable", "DataRow","PSObject","SingleValue")]
         [string]
-        $As="DataRow",
+        $As="PSObject",
     
         [Parameter( Position=4,
                     Mandatory=$false,
@@ -227,19 +256,18 @@
         [string]$AssemblyPath = $SQLiteAssembly,
 
         [Parameter( ParameterSetName = 'Con-Que',
-                    Position=9,
-                    Mandatory=$false,
+                    Position=7,
+                    Mandatory=$true,
                     ValueFromPipeline=$false,
-                    ValueFromPipelineByPropertyName=$false,
+                    ValueFromPipelineByPropertyName=$true,
                     ValueFromRemainingArguments=$false )]
         [Parameter( ParameterSetName = 'Con-Fil',
-                    Position=9,
-                    Mandatory=$false,
+                    Position=7,
+                    Mandatory=$true,
                     ValueFromPipeline=$false,
-                    ValueFromPipelineByPropertyName=$false,
+                    ValueFromPipelineByPropertyName=$true,
                     ValueFromRemainingArguments=$false )]
         [Alias( 'Connection', 'Conn' )]
-        #We don't strongly type this to avoid issues with types not being loaded....
         [System.Data.SQLite.SQLiteConnection]
         $SQLiteConnection
     ) 
@@ -247,17 +275,17 @@
     Begin
     {
         #Assembly, should already be covered by psm1
-        Try
-        {
-            [void][System.Data.SQLite.SQLiteConnection]
-        }
-        Catch
-        {
-            if( -not ($Library = Add-Type -path $SQLiteAssembly -PassThru -ErrorAction stop) )
+            Try
             {
-                Throw "This module requires the ADO.NET driver for SQLite:`n`thttp://system.data.sqlite.org/index.html/doc/trunk/www/downloads.wiki"
+                [void][System.Data.SQLite.SQLiteConnection]
             }
-        }
+            Catch
+            {
+                if( -not ($Library = Add-Type -path $SQLiteAssembly -PassThru -ErrorAction stop) )
+                {
+                    Throw "This module requires the ADO.NET driver for SQLite:`n`thttp://system.data.sqlite.org/index.html/doc/trunk/www/downloads.wiki"
+                }
+            }
 
         if ($InputFile) 
         { 
@@ -322,7 +350,6 @@
                 Try
                 {
                     $SQLiteConnection.Open()
-                    
                 }
                 Catch
                 {
@@ -337,7 +364,6 @@
 
             $DataSource = @("WHAT")
         }
-
     }
     Process
     {
@@ -350,7 +376,6 @@
             }
             else
             {
-
                 if(Test-Path $DB)
                 {
                     Write-Verbose "Querying existing Data Source '$DB'"
