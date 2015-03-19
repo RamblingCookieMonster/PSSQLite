@@ -22,6 +22,9 @@ Query a SQLite database, using parameters:
 Create a SQLite connection, use it for subsequent queries:
   * ![Create a SQLite connection, use it](/Media/Connection.png)
 
+Insert large quantities of data quickly with transactions ([why?](http://www.sqlite.org/faq.html#q19)):
+  * ![Insert large quantities of data quickly](/Media/Transaction.png)
+
 #Instructions
 
 ```powershell
@@ -59,6 +62,21 @@ Create a SQLite connection, use it for subsequent queries:
 # View the data
     Invoke-SqliteQuery -DataSource $DataSource -Query "SELECT * FROM NAMES"
 
+#Build up some fake data to bulk insert, convert it to a datatable
+    $DataTable = 1..10000 | %{
+        [pscustomobject]@{
+            fullname = "Name $_"
+            surname = "Name"
+            givenname = "$_"
+            BirthDate = (Get-Date).Adddays(-$_)
+        }
+    } | Out-DataTable
+
+#Insert the data within a single transaction (SQLite is faster this way)
+    Invoke-SQLiteBulkCopy -DataTable $DataTable -DataSource $DataSource -Table Names -NotifyAfter 1000 -verbose
+
+#View all the data!
+    Invoke-SqliteQuery -DataSource $DataSource -Query "SELECT * FROM NAMES"
 ```
 
 #Notes

@@ -24,7 +24,7 @@ Describe "New-SQLiteConnection PS$PSVersion" {
         Set-StrictMode -Version latest
 
         It 'should create a connection' {
-            $Script:Connection = New-SQLiteConnection -DataSource :MEMORY:
+            $Script:Connection = New-SQLiteConnection @Verbose -DataSource :MEMORY:
             $Script:Connection.ConnectionString | Should be "Data Source=:MEMORY:;"
             $Script:Connection.State | Should be "Open"
         }
@@ -38,37 +38,39 @@ Describe "Invoke-SQLiteQuery PS$PSVersion" {
         Set-StrictMode -Version latest
 
         It 'should take file input' {
-            $Out = @( Invoke-SqliteQuery -DataSource $SQLiteFile -InputFile $PSScriptRoot\Test.SQL )
+            $Out = @( Invoke-SqliteQuery @Verbose -DataSource $SQLiteFile -InputFile $PSScriptRoot\Test.SQL )
             $Out.count | Should be 2
             $Out[1].OrderID | Should be 500
         }
 
-        It 'should return table info' {
-            $Out = @( Invoke-SQLiteQuery -Database $SQLiteFile -Query "PRAGMA table_info(NAMES)" -ErrorAction Stop )
+        It 'should take query input' {
+            $Out = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "PRAGMA table_info(NAMES)" -ErrorAction Stop )
             $Out.count | Should Be 4
             $Out[0].Name | SHould Be "fullname"
         }
 
-        It 'should allow parameterized queries' {
+        It 'should support parameterized queries' {
             
-            $Out = @( Invoke-SQLiteQuery -Database $SQLiteFile -Query "SELECT * FROM NAMES WHERE BirthDate >= @Date" -SqlParameters @{
+            $Out = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT * FROM NAMES WHERE BirthDate >= @Date" -SqlParameters @{
                 Date = (Get-Date 3/13/2012)
             } -ErrorAction Stop )
             $Out.count | Should Be 1
             $Out[0].fullname | Should Be "Cookie Monster"
 
-            $Out = @( Invoke-SQLiteQuery -Database $SQLiteFile -Query "SELECT * FROM NAMES WHERE BirthDate >= @Date" -SqlParameters @{
+            $Out = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT * FROM NAMES WHERE BirthDate >= @Date" -SqlParameters @{
                 Date = (Get-Date 3/15/2012)
             } -ErrorAction Stop )
             $Out.count | Should Be 0
         }
 
-        It 'should take existing SQLiteConnections' {
-            Invoke-SqliteQuery -SQLiteConnection $Script:Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
-            Invoke-SqliteQuery -SQLiteConnection $Script:Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
-            @( Invoke-SqliteQuery -SQLiteConnection $Script:Connection -Query "PRAGMA STATS" ) |
+        It 'should use existing SQLiteConnections' {
+            Invoke-SqliteQuery @Verbose -SQLiteConnection $Script:Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
+            Invoke-SqliteQuery @Verbose -SQLiteConnection $Script:Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
+            @( Invoke-SqliteQuery @Verbose -SQLiteConnection $Script:Connection -Query "PRAGMA STATS" ) |
                 Select -first 1 -ExpandProperty table |
                 Should be 'OrdersToNames'
+
+            $Script:COnnection.State | Should Be Open
 
             $Script:Connection.close()
         }
@@ -78,16 +80,59 @@ Describe "Invoke-SQLiteQuery PS$PSVersion" {
             #The SQL folks out there might be annoyed by this, but we want to treat DBNulls as null to allow expected PowerShell operator behavior.
 
             $Connection = New-SQLiteConnection -DataSource :MEMORY: 
-            Invoke-SqliteQuery -SQLiteConnection $Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
-            Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
-            Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID) VALUES (2);"
+            Invoke-SqliteQuery @Verbose -SQLiteConnection $Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
+            Invoke-SqliteQuery @Verbose -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
+            Invoke-SqliteQuery @Verbose -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID) VALUES (2);"
 
-            @( Invoke-SqliteQuery -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" -As DataRow | Where{$_.fullname}).count |
+            @( Invoke-SqliteQuery @Verbose -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" -As DataRow | Where{$_.fullname}).count |
                 Should Be 2
 
-            @( Invoke-SqliteQuery -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" | Where{$_.fullname} ).count |
+            @( Invoke-SqliteQuery @Verbose -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" | Where{$_.fullname} ).count |
                 Should Be 1
         }
     }
 }
 
+Describe "Out-DataTable PS$PSVersion" {
+
+    Context 'Strict mode' { 
+
+        Set-StrictMode -Version latest
+
+        It 'should create a DataTable' {
+            
+            $Script:DataTable = 1..1000 | %{
+                [pscustomobject]@{
+                    fullname = "Name $_"
+                    surname = "Name"
+                    givenname = "$_"
+                    BirthDate = (Get-Date).Adddays(-$_)
+                }
+            } | Out-DataTable @Verbose
+
+            $Script:DataTable.GetType().Fullname | Should Be 'System.Data.DataTable'
+            @($Script:DataTable.Rows).Count | Should Be 1000
+            $Columns = $Script:DataTable.Columns | Select -ExpandProperty ColumnName
+            $Columns[0] | Should Be 'fullname'
+            $Columns[3] | Should Be 'BirthDate'
+            $Script:DataTable.columns[3].datatype.fullname | Should Be 'System.DateTime'
+            
+        }
+    }
+}
+
+Describe "Invoke-SQLiteBulkCopy PS$PSVersion" {
+
+    Context 'Strict mode' { 
+
+        Set-StrictMode -Version latest
+
+        It 'should insert data' {
+            Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -force
+            
+            @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT fullname FROM NAMES WHERE surname = 'Name'" ).count | Should Be 1000
+        }
+    }
+}
+
+Remove-Item $SQLiteFile  -force -ErrorAction SilentlyContinue

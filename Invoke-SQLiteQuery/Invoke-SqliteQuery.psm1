@@ -45,4 +45,4 @@
     }
     
 #Create some aliases, export public functions
-    Export-ModuleMember -Function $($Public | Select -ExpandProperty BaseName) -Alias *
+    Export-ModuleMember -Function $($Public | Select -ExpandProperty BaseName)

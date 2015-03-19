@@ -151,9 +151,18 @@
 
     .LINK
         New-SQLiteConnection
+
+    .LINK
+        Invoke-SQLiteBulkCopy
+
+    .LINK
+        Out-DataTable
     
     .LINK
         https://www.sqlite.org/datatype3.html
+
+    .LINK
+        https://www.sqlite.org/lang.html
 
     .LINK
         http://www.sqlite.org/pragma.html
@@ -431,6 +440,7 @@
                 {
                     $conn.Close()
                 }
+                $cmd.Dispose()
             }
             Catch
             { 
@@ -445,7 +455,7 @@
                     'Stop' {     Throw $Err }
                     'Continue' { Write-Error $Err}
                     Default {    Write-Error $Err}
-                }              
+                }           
             }
 
             if($AppendDataSource)
