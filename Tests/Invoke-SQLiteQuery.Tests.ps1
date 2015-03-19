@@ -102,12 +102,12 @@ Describe "Out-DataTable PS$PSVersion" {
         It 'should create a DataTable' {
             
             $Script:DataTable = 1..1000 | %{
-                [pscustomobject]@{
+                New-Object -TypeName PSObject -property @{
                     fullname = "Name $_"
                     surname = "Name"
                     givenname = "$_"
                     BirthDate = (Get-Date).Adddays(-$_)
-                }
+                } | Select fullname, surname, givenname, birthdate
             } | Out-DataTable @Verbose
 
             $Script:DataTable.GetType().Fullname | Should Be 'System.Data.DataTable'
