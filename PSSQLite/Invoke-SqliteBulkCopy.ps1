@@ -218,7 +218,7 @@
                         # For dates, convert it to a string SQLite will recognize
                         switch ($ColumnTypeHash[$col])
                         {
-                            "BOOLEAN" {$row[$col]}
+                            "BOOLEAN" {[int][boolean]$row[$col]}
                             "BLOB" {"'$($row[$col])'"}
                             "TEXT" {"'$($row[$col])'"}
                             "DATETIME" {
@@ -258,7 +258,7 @@
                 {
                     Write-Verbose "Processed $($RowNumber + 1) records"
                 }
-        }  
+            }  
     }
     
     #Commit the transaction and clean up the connection
