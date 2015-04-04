@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/sfynxcm7rfetdhjn/branch/master?svg=true)](https://ci.appveyor.com/project/RamblingCookieMonster/invoke-sqlitequery)
+[![Build status](https://ci.appveyor.com/api/projects/status/7pm5cjeoqx09i3co/branch/master?svg=true)](https://ci.appveyor.com/project/RamblingCookieMonster/pssqlite)
 
 PSSQLite PowerShell Module
 =============
