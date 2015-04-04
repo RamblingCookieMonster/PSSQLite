@@ -1,6 +1,6 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/sfynxcm7rfetdhjn/branch/master?svg=true)](https://ci.appveyor.com/project/RamblingCookieMonster/invoke-sqlitequery)
 
-Invoke-SQLiteQuery PowerShell Module
+PSSQLite PowerShell Module
 =============
 
 This is a PowerShell module for working with SQLite.  It uses similar syntax to the [Invoke-Sqlcmd2](https://github.com/RamblingCookieMonster/PowerShell/blob/master/Invoke-Sqlcmd2.ps1) function from Chad Miller et al.
@@ -31,13 +31,13 @@ Insert large quantities of data quickly with transactions ([why?](http://www.sql
 # One time setup
     # Download the repository
     # Unblock the zip
-    # Extract the Invoke-SQLiteQuery folder to a module path (e.g. $env:USERPROFILE\Documents\WindowsPowerShell\Modules\)
+    # Extract the PSSQLite folder to a module path (e.g. $env:USERPROFILE\Documents\WindowsPowerShell\Modules\)
 
 # Import the module.
-    Import-Module Invoke-SQLiteQuery    #Alternatively, Import-Module \\Path\To\Invoke-SQLiteQuery
+    Import-Module PSSQLite    #Alternatively, Import-Module \\Path\To\PSSQLite
 
 # Get commands in the module
-    Get-Command -Module Invoke-SQLiteQuery
+    Get-Command -Module PSSQLite
 
 # Get help for a command
     Get-Help Invoke-SQLiteQuery -Full

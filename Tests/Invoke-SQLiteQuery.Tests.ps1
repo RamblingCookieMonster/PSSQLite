@@ -11,7 +11,7 @@ if($env:APPVEYOR_REPO_BRANCH -and $env:APPVEYOR_REPO_BRANCH -notlike "master")
 }
 
 $PSVersion = $PSVersionTable.PSVersion.Major
-Import-Module $PSScriptRoot\..\Invoke-SQLiteQuery -Force
+Import-Module $PSScriptRoot\..\PSSQLite -Force
 
 $SQLiteFile = "$PSScriptRoot\Working.SQLite"
 Remove-Item $SQLiteFile  -force -ErrorAction SilentlyContinue
@@ -135,4 +135,4 @@ Describe "Invoke-SQLiteBulkCopy PS$PSVersion" {
     }
 }
 
-Remove-Item $SQLiteFile  -force -ErrorAction SilentlyContinue
+Remove-Item $SQLiteFile -force -ErrorAction SilentlyContinue
