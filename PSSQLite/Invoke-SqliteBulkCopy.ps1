@@ -211,7 +211,7 @@
             foreach ($Column in $Columns)
             {
                 $param = New-Object System.Data.SQLite.SqLiteParameter $Column
-                $Command.Parameters.Add($param)
+                [void]$Command.Parameters.Add($param)
             }
             
             for ($RowNumber = 0; $RowNumber -lt $RowCount; $RowNumber++)
