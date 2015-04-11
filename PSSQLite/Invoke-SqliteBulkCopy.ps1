@@ -224,16 +224,20 @@
                     switch ($ColumnTypeHash[$col])
                     {
                         "BOOLEAN" {
+                            $Command.Parameters[$Columns[$col]].Value = [int][boolean]$row[$col]
                         }
                         "DATETIME" {
                             Try
                             {
+                                $Command.Parameters[$Columns[$col]].Value = $row[$col].ToString("yyyy-MM-dd HH:mm:ss")
                             }
                             Catch
                             {
+                                $Command.Parameters[$Columns[$col]].Value = $row[$col]
                             }
                         }
                         Default {
+                            $Command.Parameters[$Columns[$col]].Value = $row[$col]
                         }
                     }
                 }
