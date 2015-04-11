@@ -207,38 +207,38 @@
             }
 
         #Build up the query
-            $Query = "INSERT INTO $Table ($($Columns -join ", ")) VALUES"
+            $Command.CommandText = "INSERT INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
+            foreach ($Column in $Columns)
+            {
+                $param = New-Object System.Data.SQLite.SqLiteParameter $Column
+                $Command.Parameters.Add($param)
+            }
+            
             for ($RowNumber = 0; $RowNumber -lt $RowCount; $RowNumber++)
             {
                 $row = $Datatable.Rows[$RowNumber]
-                $Values = @( 
-                    for($col = 0; $col -lt $Columns.count; $col++)
+                for($col = 0; $col -lt $Columns.count; $col++)
+                {
+                    # Depending on the type of thid column, quote it
+                    # For dates, convert it to a string SQLite will recognize
+                    switch ($ColumnTypeHash[$col])
                     {
-                        # Depending on the type of thid column, quote it
-                        # For dates, convert it to a string SQLite will recognize
-                        switch ($ColumnTypeHash[$col])
-                        {
-                            "BOOLEAN" {[int][boolean]$row[$col]}
-                            "BLOB" {"'$($row[$col])'"}
-                            "TEXT" {"'$($row[$col])'"}
-                            "DATETIME" {
-                                Try
-                                {
-                                    "'$($row[$col].ToString("yyyy-MM-dd HH:mm:ss"))'"
-                                }
-                                Catch
-                                {
-                                    "'$($row[$col])'"
-                                }
+                        "BOOLEAN" {
+                        }
+                        "DATETIME" {
+                            Try
+                            {
                             }
-                            "INTEGER" {$row[$col]}
-                            "REAL" {$row[$col]}
+                            Catch
+                            {
+                            }
+                        }
+                        Default {
                         }
                     }
-                ) -join ", "
+                }
 
                 #We have the query, execute!
-                    $Command.CommandText = "$Query ($Values)"
                     Try
                     {
                         [void]$Command.ExecuteNonQuery()
