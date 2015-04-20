@@ -18,10 +18,13 @@
 	The number of rows to fire the notification event after transferring.  0 means don't notify.  Notifications hit the verbose stream (use -verbose to see them)
 
 .PARAMETER QueryTimeout
-        Specifies the number of seconds before the queries time out.
+    Specifies the number of seconds before the queries time out.
 
 .PARAMETER SQLiteConnection
     An existing SQLiteConnection to use.  We do not close this connection upon completed query.
+
+.PARAMETER ConflictCause
+    The conflict cause to use in case a conflict occurs during insert. Valid values: Rollback, Abort, Fail, Ignore, Replace
 
 .EXAMPLE
     #
@@ -43,7 +46,7 @@
         } | Out-DataTable
 
     #Copy the data in within a single transaction (SQLite is faster this way)
-        Invoke-SQLiteBulkCopy -DataTable $DataTable -DataSource $Database -Table Names -NotifyAfter 1000 -verbose 
+        Invoke-SQLiteBulkCopy -DataTable $DataTable -DataSource $Database -Table Names -NotifyAfter 1000 -ConflictCause Ignore -Verbose 
         
 .INPUTS
     System.Data.DataTable
@@ -116,6 +119,15 @@
                     Mandatory = $true)]
         [string]
         $Table,
+
+        [Parameter ( Position=3,
+                     Mandatory=$false,
+                     ValueFromPipeline=$false,
+                     ValueFromPipelineByPropertyName=$false,
+                     ValueFromRemainingArguments=$false)]
+        [ValidateSet("Rollback","Abort","Fail","Ignore","Replace")]
+        [string]
+        $ConflictCause="",
 
         [int]
         $NotifyAfter = 0,
@@ -207,7 +219,11 @@
             }
 
         #Build up the query
-            $Command.CommandText = "INSERT INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
+            if ([string]::IsNullOrEmpty($ConflictCause)) {
+                $Command.CommandText = "INSERT INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
+            } else {
+                $Command.CommandText = "INSERT OR $ConflictCause INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
+            }
             foreach ($Column in $Columns)
             {
                 $param = New-Object System.Data.SQLite.SqLiteParameter $Column
