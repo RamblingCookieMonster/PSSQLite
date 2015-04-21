@@ -23,8 +23,8 @@
 .PARAMETER SQLiteConnection
     An existing SQLiteConnection to use.  We do not close this connection upon completed query.
 
-.PARAMETER ConflictCause
-    The conflict cause to use in case a conflict occurs during insert. Valid values: Rollback, Abort, Fail, Ignore, Replace
+.PARAMETER ConflictClause
+    The conflict clause to use in case a conflict occurs during insert. Valid values: Rollback, Abort, Fail, Ignore, Replace
 
 .EXAMPLE
     #
@@ -46,7 +46,7 @@
         } | Out-DataTable
 
     #Copy the data in within a single transaction (SQLite is faster this way)
-        Invoke-SQLiteBulkCopy -DataTable $DataTable -DataSource $Database -Table Names -NotifyAfter 1000 -ConflictCause Ignore -Verbose 
+        Invoke-SQLiteBulkCopy -DataTable $DataTable -DataSource $Database -Table Names -NotifyAfter 1000 -ConflictClause Ignore -Verbose 
         
 .INPUTS
     System.Data.DataTable
@@ -127,7 +127,7 @@
                      ValueFromRemainingArguments=$false)]
         [ValidateSet("Rollback","Abort","Fail","Ignore","Replace")]
         [string]
-        $ConflictCause="",
+        $ConflictClause,
 
         [int]
         $NotifyAfter = 0,
@@ -219,10 +219,13 @@
             }
 
         #Build up the query
-            if ([string]::IsNullOrEmpty($ConflictCause)) {
+            if ($PSBoundParameters.ContainsKey('ConflictClause'))
+            {
+                $Command.CommandText = "INSERT OR $ConflictClause INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
+            }
+            else
+            {
                 $Command.CommandText = "INSERT INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
-            } else {
-                $Command.CommandText = "INSERT OR $ConflictCause INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
             }
             foreach ($Column in $Columns)
             {
