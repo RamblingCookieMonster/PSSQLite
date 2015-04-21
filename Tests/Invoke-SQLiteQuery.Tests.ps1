@@ -132,6 +132,32 @@ Describe "Invoke-SQLiteBulkCopy PS$PSVersion" {
             
             @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT fullname FROM NAMES WHERE surname = 'Name'" ).count | Should Be 1000
         }
+        It "should adhere to ConflictCause" {
+            
+            #Basic set of tests, need more...
+
+            #Try adding same data
+            { Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -force } | Should Throw
+            
+            #Change a known row's prop we can test to ensure it does or does not change
+            $Script:DataTable.Rows[0].surname = "Name 1"
+            { Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -force } | Should Throw
+
+            $Result = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT surname FROM NAMES WHERE fullname = 'Name 1'")
+            $Result[0].surname | Should Be 'Name'
+
+            { Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -ConflictClause Rollback -Force } | Should Throw
+            
+            $Result = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT surname FROM NAMES WHERE fullname = 'Name 1'")
+            $Result[0].surname | Should Be 'Name'
+
+            Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -ConflictClause Replace -Force
+
+            $Result = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT surname FROM NAMES WHERE fullname = 'Name 1'")
+            $Result[0].surname | Should Be 'Name 1'
+
+
+        }
     }
 }
 

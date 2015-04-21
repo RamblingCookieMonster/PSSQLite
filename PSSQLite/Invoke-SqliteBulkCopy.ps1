@@ -26,6 +26,8 @@
 .PARAMETER ConflictClause
     The conflict clause to use in case a conflict occurs during insert. Valid values: Rollback, Abort, Fail, Ignore, Replace
 
+    See https://www.sqlite.org/lang_conflict.html for more details
+
 .EXAMPLE
     #
     #Create a table
