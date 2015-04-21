@@ -120,7 +120,7 @@
         [string]
         $Table,
 
-        [Parameter ( Position=3,
+        [Parameter( Position=3,
                      Mandatory=$false,
                      ValueFromPipeline=$false,
                      ValueFromPipelineByPropertyName=$false,
