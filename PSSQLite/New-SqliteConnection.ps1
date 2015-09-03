@@ -108,6 +108,7 @@
             }
         
             $conn = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
+            $conn.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
             Write-Debug "ConnectionString $ConnectionString"
 
             if($Open)

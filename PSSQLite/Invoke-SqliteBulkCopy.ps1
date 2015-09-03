@@ -163,6 +163,7 @@
         {
             $ConnectionString = "Data Source={0}" -f $DataSource
             $SQLiteConnection = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
+            $SQLiteConnection.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
         }
 
         Write-Debug "ConnectionString $($SQLiteConnection.ConnectionString)"

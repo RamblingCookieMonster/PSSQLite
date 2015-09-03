@@ -33,6 +33,9 @@ Insert large quantities of data quickly with transactions ([why?](http://www.sql
     # Unblock the zip
     # Extract the PSSQLite folder to a module path (e.g. $env:USERPROFILE\Documents\WindowsPowerShell\Modules\)
 
+    #Simple alternative, if you have PowerShell 5, or the PowerShellGet module:
+        Install-Module PSSQLite
+
 # Import the module.
     Import-Module PSSQLite    #Alternatively, Import-Module \\Path\To\PSSQLite
 
