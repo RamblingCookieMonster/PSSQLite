@@ -20,9 +20,6 @@ skip_tags: true
 skip_commits:
   message: /updated readme.*/
 
-install:
-  - cinst pester -y
-
 # Package things up.
 build_script:
   - 7z a %ModuleName%.zip %ModuleName%\

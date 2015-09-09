@@ -29,7 +29,13 @@ param(
     {
         "`n`tSTATUS: Testing with PowerShell $PSVersion`n"
     
+        if(-not (Get-Module Pester))
+        {
+            $null = Install-Module Pester -Force -Confirm:$False
+        }
+
         Import-Module Pester -force
+
 
         Invoke-Pester @Verbose -Path "$ProjectRoot\Tests" -OutputFormat NUnitXml -OutputFile "$ProjectRoot\$TestFile" -PassThru |
             Export-Clixml -Path "$ProjectRoot\PesterResults_PS$PSVersion`_$Timestamp.xml"
