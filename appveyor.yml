@@ -1,5 +1,19 @@
 # See http://www.appveyor.com/docs/appveyor-yml for many more options
 
+# Init variables for publishing to PowerShell Gallery or GitHub
+environment:
+  ModuleName: $(APPVEYOR_PROJECT_NAME) # Hard code if you really need to...
+  NugetApiKey: # Add your API key to AppVeyor, paste the encrypted bit here
+    Secure: oqMFzG8F65K5l572V7VzlZIWU7xnSYDLtSXECJAAURrXe8M2+BAp9vHLT+1h1lR0
+  Tags: 'SQL,SQLite,Database,Query' #comma separated list, e.g. 'tag1,tag2,tag3'
+  ReleaseNotes: 'Deployment Test...'
+  LicenseUri: 'https://raw.githubusercontent.com/RamblingCookieMonster/PSSQLite/master/LICENSE'
+  ProjectUri: 'http://ramblingcookiemonster.github.io/SQLite-and-PowerShell/'
+  GitHubRelease: $(APPVEYOR_PROJECT_NAME)-v1.0.1 # TODO: extract version from PSD1...
+
+#Beware the infinite rebuild bug. Woke up to 84 new releases!
+skip_tags: true
+
 # Skip on updates to the readme.
 # We can force this by adding [skip ci] or [ci skip] anywhere in commit message 
 skip_commits:
@@ -8,12 +22,34 @@ skip_commits:
 install:
   - cinst pester -y
 
-build: false
+# Package things up.
+build_script:
+  - 7z a $(ModuleName).zip $(ModuleName)\
 
+# Test with native PS and PS version 2. Upload test results
 test_script:
-# Test with native PS version
-  - ps: . .\Tests\appveyor.pester.ps1 -Test
-# Test with PS version 2
+  # Comment out this line to avoid testing in PSv2
   - ps: powershell.exe -version 2.0 -executionpolicy bypass -noprofile -file .\Tests\appveyor.pester.ps1 -Test
-# Finalize pass - collect and upload results
-  - ps: . .\Tests\appveyor.pester.ps1 -Finalize
+  - ps: . .\Tests\appveyor.pester.ps1 -Test -Finalize
+
+# zipped package for delivery
+artifacts:
+  - path: $(ModuleName).zip
+
+# Deploy GitHub release
+deploy:
+  - provider: GitHub
+    release: $(GitHubRelease)
+    auth_token:
+      secure: 6EkEfpbXPUtcNsC2dJTzbMVurklB5mY/N4ZDUfXcT1YimCbQ2O+QIYY846+ovgI4 # my encrypted token from GitHub
+    artifact: $(ModuleName).zip
+    draft: false
+    prerelease: false
+    on:
+      branch: master                 # release from master branch only
+      APPVEYOR_REPO_COMMIT_MESSAGE: /\[ReleaseMe\]/
+
+# Duct tape, until this is implemented:
+#    https://github.com/appveyor/ci/issues/128
+deploy_script:
+  - ps: . .\Tests\appveyor.pester.ps1 -Deploy
