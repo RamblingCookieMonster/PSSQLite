@@ -9,7 +9,7 @@ environment:
   ProjectUri: 'http://ramblingcookiemonster.github.io/SQLite-and-PowerShell/'
   GitHubRelease: $(APPVEYOR_PROJECT_NAME)-v1.0.1 # TODO: extract version from PSD1...
   NugetApiKey: # Add your API key to AppVeyor, paste the encrypted bit here
-    Secure: oqMFzG8F65K5l572V7VzlZIWU7xnSYDLtSXECJAAURrXe8M2+BAp9vHLT+1h1lR0
+    secure: oqMFzG8F65K5l572V7VzlZIWU7xnSYDLtSXECJAAURrXe8M2+BAp9vHLT+1h1lR0
 
 #Beware the infinite rebuild bug. Woke up to 84 new releases!
 skip_tags: true
