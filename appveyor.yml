@@ -1,4 +1,5 @@
 # See http://www.appveyor.com/docs/appveyor-yml for many more options
+os: Unstable
 
 # Init variables for publishing to PowerShell Gallery or GitHub
 environment:
