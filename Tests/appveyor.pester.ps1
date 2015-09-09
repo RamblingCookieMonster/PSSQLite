@@ -106,8 +106,7 @@ param(
                 $PublishParams.Tags = $ENV:Tags -split ',' | where { $_ } | foreach {$_.trim()}
             }
         
-            #Will it work?
-            $PublishParams.NuGetApiKey = 'haha nice try'
-            $PublishParams | Out-String
+            #Publish!
+            Publish-Module @PublishParams
         }
     }

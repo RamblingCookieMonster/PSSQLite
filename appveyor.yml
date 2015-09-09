@@ -4,7 +4,7 @@
 environment:
   ModuleName: $(APPVEYOR_PROJECT_NAME) # Hard code if you really need to...
   Tags: 'SQL,SQLite,Database,Query' #comma separated list, e.g. 'tag1,tag2,tag3'
-  ReleaseNotes: 'Deployment Test...'
+  ReleaseNotes: 'Added UNC support'
   LicenseUri: 'https://raw.githubusercontent.com/RamblingCookieMonster/PSSQLite/master/LICENSE'
   ProjectUri: 'http://ramblingcookiemonster.github.io/SQLite-and-PowerShell/'
   GitHubRelease: $(APPVEYOR_PROJECT_NAME)-v1.0.1 # TODO: extract version from PSD1...
@@ -35,19 +35,6 @@ test_script:
 # zipped package for delivery
 artifacts:
   - path: $(ModuleName).zip
-
-# Deploy GitHub release
-deploy:
-  - provider: GitHub
-    release: $(GitHubRelease)
-    auth_token:
-      secure: 6EkEfpbXPUtcNsC2dJTzbMVurklB5mY/N4ZDUfXcT1YimCbQ2O+QIYY846+ovgI4 # my encrypted token from GitHub
-    artifact: $(ModuleName).zip
-    draft: false
-    prerelease: false
-    on:
-      branch: master                 # release from master branch only
-      APPVEYOR_REPO_COMMIT_MESSAGE: /\[ReleaseMe\]/
 
 # Duct tape, until this is implemented:
 #    https://github.com/appveyor/ci/issues/128
