@@ -24,7 +24,7 @@ install:
 
 # Package things up.
 build_script:
-  - 7z a $(ModuleName).zip $(ModuleName)\
+  - 7z a %ModuleName%.zip %ModuleName%\
 
 # Test with native PS and PS version 2. Upload test results
 test_script:
