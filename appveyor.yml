@@ -20,6 +20,10 @@ skip_tags: true
 skip_commits:
   message: /updated readme.*/
 
+# PS2 compat
+install:
+  - cinst pester -y
+
 # Package things up.
 build_script:
   - 7z a %ModuleName%.zip %ModuleName%\
