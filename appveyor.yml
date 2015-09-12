@@ -30,9 +30,14 @@ build_script:
 
 # Test with native PS and PS version 2. Upload test results
 test_script:
-  # Comment out this line to avoid testing in PSv2
-  - ps: powershell.exe -version 2.0 -executionpolicy bypass -noprofile -file .\Tests\appveyor.pester.ps1 -Test
-  - ps: . .\Tests\appveyor.pester.ps1 -Test -Finalize
+  # Set up pester path for PSv2
+  - ps: . .\Tests\Helpers\Initialize-PesterPath.ps1
+  # Test in PSv2
+  - ps: powershell.exe -version 2.0 -executionpolicy bypass -noprofile -file .\Tests\Helpers\Invoke-PesterFromAppveyor.ps1
+  # Test in native PS
+  - ps: . .\Tests\Helpers\Invoke-PesterFromAppveyor.ps1
+  # Collect all test results, fail if any failures
+  - ps: . .\Tests\Helpers\Read-PesterOutput.ps1
 
 # zipped package for delivery
 artifacts:
@@ -41,4 +46,4 @@ artifacts:
 # Duct tape, until this is implemented:
 #    https://github.com/appveyor/ci/issues/128
 deploy_script:
-  - ps: . .\Tests\appveyor.pester.ps1 -Deploy
+  - ps: . .\Tests\Helpers\Invoke-PSGalleryDeployment.ps1
