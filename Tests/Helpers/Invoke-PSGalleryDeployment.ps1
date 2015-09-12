@@ -4,6 +4,8 @@ if($env:APPVEYOR_REPO_BRANCH -and $env:APPVEYOR_REPO_BRANCH -notlike "master")
     $Verbose.add("Verbose",$True)
 }
 
+Set-StrictMode -Off
+
 # Deploy!
 
 if($ENV:APPVEYOR_REPO_COMMIT_MESSAGE -notmatch '\[ReleaseMe\]')
