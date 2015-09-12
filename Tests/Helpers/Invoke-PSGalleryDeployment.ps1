@@ -19,6 +19,10 @@ elseif($env:APPVEYOR_REPO_BRANCH -notlike 'master')
 else
 {
 
+    #Thanks to Trevor Sullivan!
+    #https://github.com/pcgeek86/PSNuGet/blob/master/deploy.ps1
+    Find-Package -ForceBootstrap -Name zzzzzz -ErrorAction Ignore;
+
     $PublishParams = @{
         Path = Join-Path $ENV:APPVEYOR_BUILD_FOLDER $ENV:ModuleName
         NuGetApiKey = $ENV:NugetApiKey
