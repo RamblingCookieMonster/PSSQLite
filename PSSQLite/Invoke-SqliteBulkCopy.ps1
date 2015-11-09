@@ -158,6 +158,37 @@
         $com.Dispose()
     }
 
+    function Get-ParameterName
+    {
+        [CmdletBinding()]
+        Param(
+            [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+            [string[]]$InputObject,
+
+            [Parameter(ValueFromPipelineByPropertyName = $true)]
+            [string]$Regex = '(\W+)',
+
+            [Parameter(ValueFromPipelineByPropertyName = $true)]
+            [string]$Separator = '_'
+        )
+
+        Process{
+            $InputObject | ForEach-Object {
+                if($_ -match $Regex){
+                    $Groups = $_ -split $Regex | Where-Object {$_}
+                    for($i = 0; $i -lt $Groups.Length; $i++){
+                        if($Groups[$i] -match $Regex){
+                            $Groups[$i] = ($Groups[$i].ToCharArray() | ForEach-Object {[string][int]$_}) -join $Separator
+                        }
+                    }
+                    $Groups -join $Separator
+                } else {
+                    $_
+                }
+            }
+        }
+    }
+
     #Connections
         if($PSBoundParameters.Keys -notcontains "SQLiteConnection")
         {
@@ -191,6 +222,7 @@
         #Get column info...
             $Columns = $DataTable.Columns | Select -ExpandProperty ColumnName
             $ColumnTypeHash = @{}
+            $ColumnToParamHash = @{}
             $Index = 0
             foreach($Col in $DataTable.Columns)
             {
@@ -219,20 +251,25 @@
                 #We ref columns by their index, so add that...
                 $ColumnTypeHash.Add($Index,$Type)
                 $Index++
+
+                # Parameter names can only be alphanumeric: https://www.sqlite.org/c3ref/bind_blob.html
+                # So we have to replace all non-alphanumeric chars in column name to use it as parameter later.
+                # This builds hashtable to correlate column name with parameter name.
+                $ColumnToParamHash.Add($Col.ColumnName, (Get-ParameterName $Col.ColumnName))
             }
 
         #Build up the query
             if ($PSBoundParameters.ContainsKey('ConflictClause'))
             {
-                $Command.CommandText = "INSERT OR $ConflictClause INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
+                $Command.CommandText = "INSERT OR $ConflictClause INTO $Table ($("'{0}'" -f ($Columns -join "', '"))) VALUES ($( $( foreach($Column in $Columns){ "@{0}" -f $ColumnToParamHash[$Column] } ) -join ", "  ))"
             }
             else
             {
-                $Command.CommandText = "INSERT INTO $Table ($($Columns -join ", ")) VALUES ($( $( foreach($Column in $Columns){ "@$Column" } ) -join ", "  ))"
+                $Command.CommandText = "INSERT INTO $Table ($("'{0}'" -f ($Columns -join "', '"))) VALUES ($( $( foreach($Column in $Columns){ "@{0}" -f $ColumnToParamHash[$Column] } ) -join ", "  ))"
             }
             foreach ($Column in $Columns)
             {
-                $param = New-Object System.Data.SQLite.SqLiteParameter $Column
+                $param = New-Object System.Data.SQLite.SqLiteParameter $ColumnToParamHash[$Column]
                 [void]$Command.Parameters.Add($param)
             }
             
@@ -246,20 +283,20 @@
                     switch ($ColumnTypeHash[$col])
                     {
                         "BOOLEAN" {
-                            $Command.Parameters[$Columns[$col]].Value = [int][boolean]$row[$col]
+                            $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = [int][boolean]$row[$col]
                         }
                         "DATETIME" {
                             Try
                             {
-                                $Command.Parameters[$Columns[$col]].Value = $row[$col].ToString("yyyy-MM-dd HH:mm:ss")
+                                $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = $row[$col].ToString("yyyy-MM-dd HH:mm:ss")
                             }
                             Catch
                             {
-                                $Command.Parameters[$Columns[$col]].Value = $row[$col]
+                                $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = $row[$col]
                             }
                         }
                         Default {
-                            $Command.Parameters[$Columns[$col]].Value = $row[$col]
+                            $Command.Parameters[$ColumnToParamHash[$Columns[$col]]].Value = $row[$col]
                         }
                     }
                 }
