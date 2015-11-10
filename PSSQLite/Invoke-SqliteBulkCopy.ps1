@@ -175,8 +175,8 @@
         Process{
             $InputObject | ForEach-Object {
                 if($_ -match $Regex){
-                    $Groups = $_ -split $Regex | Where-Object {$_}
-                    for($i = 0; $i -lt $Groups.Length; $i++){
+                    $Groups = @($_ -split $Regex | Where-Object {$_})
+                    for($i = 0; $i -lt $Groups.Count; $i++){
                         if($Groups[$i] -match $Regex){
                             $Groups[$i] = ($Groups[$i].ToCharArray() | ForEach-Object {[string][int]$_}) -join $Separator
                         }
