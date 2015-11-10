@@ -149,7 +149,7 @@
         [cmdletbinding()]
         param($conn, $com, $BoundParams)
         #Only dispose of the connection if we created it
-        if($BoundParams.Keys -notcontains 'SQLConnection')
+        if($BoundParams.Keys -notcontains 'SQLiteConnection')
         {
             $conn.Close()
             $conn.Dispose()
