@@ -189,6 +189,38 @@
         }
     }
 
+    function New-SqliteBulkQuery {
+        [CmdletBinding()]
+        Param(
+            [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
+            [string]$Table,
+
+            [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
+            [string[]]$Columns,
+
+            [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
+            [string[]]$Parameters,
+
+            [Parameter(ValueFromPipelineByPropertyName = $true)]
+            [string]$ConflictClause = ''
+        )
+
+        Begin{
+            $EscapeSingleQuote = "'","''"
+            $Delimeter = ", "
+            $QueryTemplate = "INSERT{0} INTO {1} ({2}) VALUES ({3})"
+        }
+
+        Process{
+            $fmtConflictClause = if($ConflictClause){" OR $ConflictClause"}
+            $fmtTable = "'{0}'" -f ($Table -replace $EscapeSingleQuote)
+            $fmtColumns = ($Columns | ForEach-Object { "'{0}'" -f ($_ -replace $EscapeSingleQuote) }) -join $Delimeter
+            $fmtParameters = ($Parameters | ForEach-Object { "@$_"}) -join $Delimeter
+
+            $QueryTemplate -f $fmtConflictClause, $fmtTable, $fmtColumns, $fmtParameters
+        }
+    }
+
     #Connections
         if($PSBoundParameters.Keys -notcontains "SQLiteConnection")
         {
@@ -250,23 +282,25 @@
 
                 #We ref columns by their index, so add that...
                 $ColumnTypeHash.Add($Index,$Type)
-                $Index++
 
                 # Parameter names can only be alphanumeric: https://www.sqlite.org/c3ref/bind_blob.html
                 # So we have to replace all non-alphanumeric chars in column name to use it as parameter later.
                 # This builds hashtable to correlate column name with parameter name.
                 $ColumnToParamHash.Add($Col.ColumnName, (Get-ParameterName $Col.ColumnName))
+
+                $Index++
             }
 
         #Build up the query
             if ($PSBoundParameters.ContainsKey('ConflictClause'))
             {
-                $Command.CommandText = "INSERT OR $ConflictClause INTO $Table ($("'{0}'" -f ($Columns -join "', '"))) VALUES ($( $( foreach($Column in $Columns){ "@{0}" -f $ColumnToParamHash[$Column] } ) -join ", "  ))"
+                $Command.CommandText = New-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values -ConflictClause $ConflictClause
             }
             else
             {
-                $Command.CommandText = "INSERT INTO $Table ($("'{0}'" -f ($Columns -join "', '"))) VALUES ($( $( foreach($Column in $Columns){ "@{0}" -f $ColumnToParamHash[$Column] } ) -join ", "  ))"
+                $Command.CommandText = New-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values
             }
+
             foreach ($Column in $Columns)
             {
                 $param = New-Object System.Data.SQLite.SqLiteParameter $ColumnToParamHash[$Column]
