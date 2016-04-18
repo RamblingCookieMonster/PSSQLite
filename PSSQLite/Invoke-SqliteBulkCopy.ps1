@@ -192,6 +192,12 @@
     #Connections
         if($PSBoundParameters.Keys -notcontains "SQLiteConnection")
         {
+            if ($DataSource -match '^\.') 
+            {
+                $DataSource = Join-Path (Get-Location).Path ($DataSource -Replace '^\.')
+                Write-Verbose -Message ('Expanding data source path: {0}' -f $Database)
+            }            
+            
             $ConnectionString = "Data Source={0}" -f $DataSource
             $SQLiteConnection = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
             $SQLiteConnection.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!

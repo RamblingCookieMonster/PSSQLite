@@ -385,6 +385,14 @@
             }
             else
             {
+                # SQLite connection strings don't like short paths.  If we see a short path
+                # we make is a fully qualified path.
+                if ($DB -match '^\.') 
+                {
+                    $DB = Join-Path (Get-Location).Path ($DB -Replace '^\.')
+                    Write-Verbose -Message ('Expanding data source path: {0}' -f $DB)
+                }
+                
                 if(Test-Path $DB)
                 {
                     Write-Verbose "Querying existing Data Source '$DB'"

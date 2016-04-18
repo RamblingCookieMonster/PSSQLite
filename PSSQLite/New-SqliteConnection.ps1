@@ -94,6 +94,12 @@
     {
         foreach($DataSRC in $DataSource)
         {
+            if ($DataSRC -match '^\.') 
+            {
+                $DataSRC = Join-Path (Get-Location).Path ($DataSRC -Replace '^\.')
+                Write-Verbose -Message ('Expanding data source path: {0}' -f $DataSRC)
+            }            
+            
             Write-Verbose "Querying Data Source '$DataSRC'"
             [string]$ConnectionString = "Data Source=$DataSRC;"
             if ($Password) 
