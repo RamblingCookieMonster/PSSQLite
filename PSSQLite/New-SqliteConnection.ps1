@@ -94,8 +94,17 @@
     {
         foreach($DataSRC in $DataSource)
         {
-            Write-Verbose "Querying Data Source '$DataSRC'"
-            [string]$ConnectionString = "Data Source=$DataSRC;"
+            if ($DataSRC -match ':MEMORY:' ) 
+            {
+                $Database = $DataSRC
+            }
+            else 
+            {
+                $Database = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DataSRC)    
+            }
+            
+            Write-Verbose "Querying Data Source '$Database'"
+            [string]$ConnectionString = "Data Source=$Database;"
             if ($Password) 
             {
                 $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
