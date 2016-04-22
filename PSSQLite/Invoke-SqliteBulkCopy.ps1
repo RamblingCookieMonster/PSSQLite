@@ -192,13 +192,16 @@
     #Connections
         if($PSBoundParameters.Keys -notcontains "SQLiteConnection")
         {
-            if ($DataSource -match '^\.') 
+            if ($DataSource -match ':MEMORY:') 
             {
-                $DataSource = Join-Path (Get-Location).Path ($DataSource -Replace '^\.')
-                Write-Verbose -Message ('Expanding data source path: {0}' -f $Database)
-            }            
-            
-            $ConnectionString = "Data Source={0}" -f $DataSource
+                $Database = $DataSource
+            }
+            else 
+            {
+                $Database = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DataSource)    
+            }
+
+            $ConnectionString = "Data Source={0}" -f $Database
             $SQLiteConnection = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
             $SQLiteConnection.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
         }

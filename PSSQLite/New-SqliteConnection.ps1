@@ -94,14 +94,17 @@
     {
         foreach($DataSRC in $DataSource)
         {
-            if ($DataSRC -match '^\.') 
+            if ($DataSRC -match ':MEMORY:' ) 
             {
-                $DataSRC = Join-Path (Get-Location).Path ($DataSRC -Replace '^\.')
-                Write-Verbose -Message ('Expanding data source path: {0}' -f $DataSRC)
-            }            
+                $Database = $DataSRC
+            }
+            else 
+            {
+                $Database = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DataSRC)    
+            }
             
-            Write-Verbose "Querying Data Source '$DataSRC'"
-            [string]$ConnectionString = "Data Source=$DataSRC;"
+            Write-Verbose "Querying Data Source '$Database'"
+            [string]$ConnectionString = "Data Source=$Database;"
             if ($Password) 
             {
                 $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)

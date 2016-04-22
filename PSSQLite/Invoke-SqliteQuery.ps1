@@ -11,7 +11,7 @@
         Help details below borrowed from Invoke-Sqlcmd, may be inaccurate here.
 
     .PARAMETER DataSource
-        Path to one ore more SQLite data sources to query 
+        Path to one or more SQLite data sources to query 
 
     .PARAMETER Query
         Specifies a query to be run.
@@ -385,24 +385,28 @@
             }
             else
             {
-                # SQLite connection strings don't like short paths.  If we see a short path
-                # we make is a fully qualified path.
-                if ($DB -match '^\.') 
+                # Resolve the path entered for the database to a proper path name.
+                # This accounts for a variaty of possible ways to provide a path, but
+                # in the end the connection string needs a fully qualified file path.
+                if ($DB -match ":MEMORY:") 
                 {
-                    $DB = Join-Path (Get-Location).Path ($DB -Replace '^\.')
-                    Write-Verbose -Message ('Expanding data source path: {0}' -f $DB)
+                    $Database = $DB
+                }
+                else 
+                {
+                    $Database = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DB)    
                 }
                 
-                if(Test-Path $DB)
+                if(Test-Path $Database)
                 {
-                    Write-Verbose "Querying existing Data Source '$DB'"
+                    Write-Verbose "Querying existing Data Source '$Database'"
                 }
                 else
                 {
-                    Write-Verbose "Creating andn querying Data Source '$DB'"
+                    Write-Verbose "Creating andn querying Data Source '$Database'"
                 }
 
-                $ConnectionString = "Data Source={0}" -f $DB
+                $ConnectionString = "Data Source={0}" -f $Database
 
                 $conn = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
                 $conn.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
