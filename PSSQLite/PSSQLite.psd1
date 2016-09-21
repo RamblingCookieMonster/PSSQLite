@@ -4,7 +4,7 @@
 ModuleToProcess = 'PSSQLite.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.1'
+ModuleVersion = '1.0.2'
 
 # ID used to uniquely identify this module
 GUID = '381f3394-9b8a-492e-94b4-b3aa9e775761'

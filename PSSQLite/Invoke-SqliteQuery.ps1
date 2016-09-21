@@ -296,12 +296,12 @@
                 }
             }
 
-        if ($InputFile) 
+        if ($PSBoundParameters.ContainsKey('InputFile')) 
         { 
             $filePath = $(Resolve-Path $InputFile).path 
-            $Query =  [System.IO.File]::ReadAllText("$filePath") 
+            $Query =  [System.IO.File]::ReadAllText("$filePath")
+            Write-Verbose "Extracted query from [$InputFile]"
         }
-
         Write-Verbose "Running Invoke-SQLiteQuery with ParameterSet '$($PSCmdlet.ParameterSetName)'.  Performing query '$Query'"
 
         If($As -eq "PSObject")
