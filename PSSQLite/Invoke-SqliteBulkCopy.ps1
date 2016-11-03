@@ -261,7 +261,7 @@
     if ($Force -or $PSCmdlet.ShouldProcess("$($DataTable.Rows.Count) rows, with BoundParameters $($PSBoundParameters | Out-String)", "SQL Bulk Copy"))
     {
         #Get column info...
-            $Columns = $DataTable.Columns | Select -ExpandProperty ColumnName
+            [array]$Columns = $DataTable.Columns | Select-Object -ExpandProperty ColumnName
             $ColumnTypeHash = @{}
             $ColumnToParamHash = @{}
             $Index = 0
