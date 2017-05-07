@@ -190,7 +190,7 @@
     }
 
     function New-SqliteBulkQuery {
-        [CmdletBinding()]
+        [CmdletBinding(SupportsShouldProcess)]
         Param(
             [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
             [string]$Table,
@@ -216,8 +216,10 @@
             $fmtTable = "'{0}'" -f ($Table -replace $EscapeSingleQuote)
             $fmtColumns = ($Columns | ForEach-Object { "'{0}'" -f ($_ -replace $EscapeSingleQuote) }) -join $Delimeter
             $fmtParameters = ($Parameters | ForEach-Object { "@$_"}) -join $Delimeter
-
-            $QueryTemplate -f $fmtConflictClause, $fmtTable, $fmtColumns, $fmtParameters
+            $query = $QueryTemplate -f $fmtConflictClause, $fmtTable, $fmtColumns, $fmtParameters
+            if ($PSCmdlet.ShouldProcess($query)) {
+                Write-Output $query
+            }
         }
     }
 
@@ -246,7 +248,6 @@
                 $SQLiteConnection.Open()
             }
             $Command = $SQLiteConnection.CreateCommand()
-            $CommandTimeout = $QueryTimeout
             $Transaction = $SQLiteConnection.BeginTransaction()
         }
         Catch
