@@ -11,7 +11,7 @@ Caveats:
 * Minimal testing.
 * Today was my first time working with SQLite
 
-#Functionality
+## Functionality
 
 Create a SQLite database and table:
   * ![Create a SQLite database and table](/Media/Create.png)
@@ -25,7 +25,7 @@ Create a SQLite connection, use it for subsequent queries:
 Insert large quantities of data quickly with transactions ([why?](http://www.sqlite.org/faq.html#q19)):
   * ![Insert large quantities of data quickly](/Media/Transaction.png)
 
-#Instructions
+## Instructions
 
 ```powershell
 # One time setup
@@ -82,7 +82,7 @@ Insert large quantities of data quickly with transactions ([why?](http://www.sql
     Invoke-SqliteQuery -DataSource $DataSource -Query "SELECT * FROM NAMES"
 ```
 
-#Notes
+## Notes
 
 This isn't a fully featured module or function.
 
