@@ -121,7 +121,7 @@
                     $Col.ColumnName = $Name  
                     
                     #If it's not DBNull or Null, get the type
-                    if ($Value -isnot [System.DBNull] -and $Value -ne $null)
+                    if ($Value -isnot [System.DBNull] -and $null -ne $Value)
                     {
                         $Col.DataType = [System.Type]::GetType( $(Get-ODTType $property.TypeNameOfValue) )
                     }
@@ -149,7 +149,7 @@
                     {
                         $DR.Item($Name) = $Value | ConvertTo-XML -As String -NoTypeInformation -Depth 1
                     }
-                    elseif($Value -eq $null)
+                    elseif($null -eq $Value)
                     {
                         $DR.Item($Name) = [DBNull]::Value
                     }
@@ -165,7 +165,7 @@
                 }
 
                 #Did we get a null or dbnull for a non-nullable item?  let the user know.
-                if($NonNullable -contains $Name -and ($Value -is [System.DBNull] -or $Value -eq $null))
+                if($NonNullable -contains $Name -and ($Value -is [System.DBNull] -or $null -eq $Value))
                 {
                     write-verbose "NonNullable property '$Name' with null value found: $($object | out-string)"
                 }
