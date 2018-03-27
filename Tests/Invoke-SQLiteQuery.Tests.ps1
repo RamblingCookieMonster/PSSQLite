@@ -52,13 +52,13 @@ Describe "Invoke-SQLiteQuery PS$PSVersion" {
         It 'should support parameterized queries' {
             
             $Out = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT * FROM NAMES WHERE BirthDate >= @Date" -SqlParameters @{
-                Date = (Get-Date 3/13/2012)
+                Date = (Get-Date -Year 2012 -Month 3 -Day 13)
             } -ErrorAction Stop )
             $Out.count | Should Be 1
             $Out[0].fullname | Should Be "Cookie Monster"
 
             $Out = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT * FROM NAMES WHERE BirthDate >= @Date" -SqlParameters @{
-                Date = (Get-Date 3/15/2012)
+                Date = (Get-Date -Year 2012 -Month 3 -Day 15)
             } -ErrorAction Stop )
             $Out.count | Should Be 0
         }
