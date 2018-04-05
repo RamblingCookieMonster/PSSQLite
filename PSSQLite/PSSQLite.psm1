@@ -18,7 +18,7 @@
         Throw "Something is odd with bitness..."
     }
 
-    if( -not ($Library = Add-Type -path $SQLiteAssembly -PassThru -ErrorAction stop) )
+    if( -not (Add-Type -path $SQLiteAssembly -PassThru -ErrorAction stop) )
     {
         Throw "This module requires the ADO.NET driver for SQLite:`n`thttp://system.data.sqlite.org/index.html/doc/trunk/www/downloads.wiki"
     }
@@ -45,4 +45,4 @@
     }
     
 #Create some aliases, export public functions
-    Export-ModuleMember -Function $($Public | Select -ExpandProperty BaseName)
+    Export-ModuleMember -Function $($Public | Select-Object -ExpandProperty BaseName)
