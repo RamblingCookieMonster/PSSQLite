@@ -55,7 +55,7 @@
         SQL
 
     #>
-    [cmdletbinding()]
+    [cmdletbinding(SupportsShouldProcess)]
     [OutputType([System.Data.SQLite.SQLiteConnection])]
     param(
         [Parameter( Position=0,
@@ -94,48 +94,51 @@
     {
         foreach($DataSRC in $DataSource)
         {
-            if ($DataSRC -match ':MEMORY:' ) 
+            if ( $PSCmdlet.ShouldProcess($DataSRC) )
             {
-                $Database = $DataSRC
-            }
-            else 
-            {
-                $Database = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DataSRC)    
-            }
+                if ($DataSRC -match ':MEMORY:' ) 
+                {
+                    $Database = $DataSRC
+                }
+                else 
+                {
+                    $Database = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DataSRC)    
+                }
+                
+                Write-Verbose "Querying Data Source '$Database'"
+                [string]$ConnectionString = "Data Source=$Database;"
+                if ($Password) 
+                {
+                    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
+                    $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+                    $ConnectionString += "Password=$PlainPassword;"
+                }
+                if($ReadOnly)
+                {
+                    $ConnectionString += "Read Only=True;"
+                }
             
-            Write-Verbose "Querying Data Source '$Database'"
-            [string]$ConnectionString = "Data Source=$Database;"
-            if ($Password) 
-            {
-                $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password)
-                $PlainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-                $ConnectionString += "Password=$PlainPassword;"
-            }
-            if($ReadOnly)
-            {
-                $ConnectionString += "Read Only=True;"
-            }
-        
-            $conn = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
-            $conn.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
-            Write-Debug "ConnectionString $ConnectionString"
-
-            if($Open)
-            {
-                Try
+                $conn = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
+                $conn.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
+                Write-Debug "ConnectionString $ConnectionString"
+    
+                if($Open)
                 {
-                    $conn.Open() 
+                    Try
+                    {
+                        $conn.Open() 
+                    }
+                    Catch
+                    {
+                        Write-Error $_
+                        continue
+                    }
                 }
-                Catch
-                {
-                    Write-Error $_
-                    continue
-                }
+    
+                write-Verbose "Created SQLiteConnection:`n$($Conn | Out-String)"
+    
+                $Conn
             }
-
-            write-Verbose "Created SQLiteConnection:`n$($Conn | Out-String)"
-
-            $Conn
         }
     }
 }
