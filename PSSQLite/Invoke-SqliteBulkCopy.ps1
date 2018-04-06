@@ -189,7 +189,7 @@
         }
     }
 
-    function New-SqliteBulkQuery {
+    function Invoke-SqliteBulkQuery {
         [CmdletBinding()]
         Param(
             [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
@@ -303,11 +303,11 @@
         #Build up the query
             if ($PSBoundParameters.ContainsKey('ConflictClause'))
             {
-                $Command.CommandText = New-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values -ConflictClause $ConflictClause
+                $Command.CommandText = Invoke-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values -ConflictClause $ConflictClause
             }
             else
             {
-                $Command.CommandText = New-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values
+                $Command.CommandText = Invoke-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values
             }
 
             foreach ($Column in $Columns)
