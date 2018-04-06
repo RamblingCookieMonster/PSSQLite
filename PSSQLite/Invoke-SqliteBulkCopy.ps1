@@ -135,11 +135,7 @@
         $NotifyAfter = 0,
 
         [switch]
-        $Force,
-
-        [Int32]
-        $QueryTimeout = 600
-
+        $Force
     )
 
     Write-Verbose "Running Invoke-SQLiteBulkCopy with ParameterSet '$($PSCmdlet.ParameterSetName)'."
@@ -246,7 +242,6 @@
                 $SQLiteConnection.Open()
             }
             $Command = $SQLiteConnection.CreateCommand()
-            $CommandTimeout = $QueryTimeout
             $Transaction = $SQLiteConnection.BeginTransaction()
         }
         Catch
