@@ -55,7 +55,7 @@
         SQL
 
     #>
-    [cmdletbinding(SupportsShouldProcess=$false)]
+    [cmdletbinding(SupportsShouldProcess)]
     [OutputType([System.Data.SQLite.SQLiteConnection])]
     param(
         [Parameter( Position=0,
