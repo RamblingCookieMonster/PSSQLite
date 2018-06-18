@@ -246,7 +246,7 @@
                 $SQLiteConnection.Open()
             }
             $Command = $SQLiteConnection.CreateCommand()
-            $CommandTimeout = $QueryTimeout
+            $Command.CommandTimeout = $QueryTimeout
             $Transaction = $SQLiteConnection.BeginTransaction()
         }
         Catch
