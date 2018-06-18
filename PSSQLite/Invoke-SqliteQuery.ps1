@@ -1,17 +1,17 @@
-﻿function Invoke-SqliteQuery {  
-    <# 
-    .SYNOPSIS 
+﻿function Invoke-SqliteQuery {
+    <#
+    .SYNOPSIS
         Runs a SQL script against a SQLite database.
 
-    .DESCRIPTION 
+    .DESCRIPTION
         Runs a SQL script against a SQLite database.
 
-        Paramaterized queries are supported. 
+        Paramaterized queries are supported.
 
         Help details below borrowed from Invoke-Sqlcmd, may be inaccurate here.
 
     .PARAMETER DataSource
-        Path to one or more SQLite data sources to query 
+        Path to one or more SQLite data sources to query
 
     .PARAMETER Query
         Specifies a query to be run.
@@ -23,7 +23,7 @@
         Specifies the number of seconds before the queries time out.
 
     .PARAMETER As
-        Specifies output type - DataSet, DataTable, array of DataRow, PSObject or Single Value 
+        Specifies output type - DataSet, DataTable, array of DataRow, PSObject or Single Value
 
         PSObject output introduces overhead but adds flexibility for working with results: http://powershell.org/wp/forums/topic/dealing-with-dbnull/
 
@@ -43,8 +43,8 @@
     .PARAMETER AppendDataSource
         If specified, append the SQLite data source path to PSObject or DataRow output
 
-    .INPUTS 
-        DataSource 
+    .INPUTS
+        DataSource
             You can pipe DataSource paths to Invoke-SQLiteQuery.  The query will execute against each Data Source.
 
     .OUTPUTS
@@ -60,12 +60,12 @@
         # First, we create a database and a table
             $Query = "CREATE TABLE NAMES (fullname VARCHAR(20) PRIMARY KEY, surname TEXT, givenname TEXT, BirthDate DATETIME)"
             $Database = "C:\Names.SQLite"
-        
+
             Invoke-SqliteQuery -Query $Query -DataSource $Database
 
         # We have a database, and a table, let's view the table info
             Invoke-SqliteQuery -DataSource $Database -Query "PRAGMA table_info(NAMES)"
-                
+
                 cid name      type         notnull dflt_value pk
                 --- ----      ----         ------- ---------- --
                   0 fullname  VARCHAR(20)        0             1
@@ -82,9 +82,9 @@
 
         # Check to see if we inserted the data:
             Invoke-SqliteQuery -DataSource $Database -Query "SELECT * FROM NAMES"
-                
-                fullname       surname givenname BirthDate            
-                --------       ------- --------- ---------            
+
+                fullname       surname givenname BirthDate
+                --------       ------- --------- ---------
                 Cookie Monster Cookie  Monster   3/14/2012 12:27:13 PM
 
         # Insert another entry with too many characters in the fullname.
@@ -96,16 +96,16 @@
 
             Invoke-SqliteQuery -DataSource $Database -Query "SELECT * FROM NAMES"
 
-                fullname              surname givenname BirthDate            
-                --------              ------- --------- ---------            
+                fullname              surname givenname BirthDate
+                --------              ------- --------- ---------
                 Cookie Monster        Cookie  Monster   3/14/2012 12:27:13 PM
                 Cookie Monster![...]! Cookie  Monster   3/14/2012 12:29:32 PM
 
     .EXAMPLE
         Invoke-SqliteQuery -DataSource C:\NAMES.SQLite -Query "SELECT * FROM NAMES" -AppendDataSource
 
-            fullname       surname givenname BirthDate             Database       
-            --------       ------- --------- ---------             --------       
+            fullname       surname givenname BirthDate             DataSource
+            --------       ------- --------- ---------             --------
             Cookie Monster Cookie  Monster   3/14/2012 12:55:55 PM C:\Names.SQLite
 
         # Append Database column (path) to each result
@@ -116,7 +116,7 @@
         # Invoke SQL from an input file
 
     .EXAMPLE
-        $Connection = New-SQLiteConnection -DataSource :MEMORY: 
+        $Connection = New-SQLiteConnection -DataSource :MEMORY:
         Invoke-SqliteQuery -SQLiteConnection $Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
         Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
         Invoke-SqliteQuery -SQLiteConnection $Connection -Query "PRAGMA STATS"
@@ -126,7 +126,7 @@
             # Create a table in the memory based datasource, verify it exists with PRAGMA STATS
 
     .EXAMPLE
-        $Connection = New-SQLiteConnection -DataSource :MEMORY: 
+        $Connection = New-SQLiteConnection -DataSource :MEMORY:
         Invoke-SqliteQuery -SQLiteConnection $Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
         Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
         Invoke-SqliteQuery -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID) VALUES (2);"
@@ -134,17 +134,17 @@
         # We now have two entries, only one has a fullname.  Despite this, the following command returns both; very un-PowerShell!
         Invoke-SqliteQuery -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" -As DataRow | Where{$_.fullname}
 
-            OrderID fullname      
-            ------- --------      
+            OrderID fullname
+            ------- --------
                   1 Cookie Monster
-                  2               
+                  2
 
         # Using the default -As PSObject, we can get PowerShell-esque behavior:
         Invoke-SqliteQuery -SQLiteConnection $Connection -Query "SELECT * FROM OrdersToNames" | Where{$_.fullname}
 
-            OrderID fullname                                                                         
-            ------- --------                                                                         
-                  1 Cookie Monster 
+            OrderID fullname
+            ------- --------
+                  1 Cookie Monster
 
     .LINK
         https://github.com/RamblingCookieMonster/Invoke-SQLiteQuery
@@ -157,7 +157,7 @@
 
     .LINK
         Out-DataTable
-    
+
     .LINK
         https://www.sqlite.org/datatype3.html
 
@@ -204,7 +204,7 @@
         })]
         [string[]]
         $DataSource,
-    
+
         [Parameter( ParameterSetName='Src-Que',
                     Position=1,
                     Mandatory=$true,
@@ -217,7 +217,7 @@
                     ValueFromRemainingArguments=$false )]
         [string]
         $Query,
-        
+
         [Parameter( ParameterSetName='Src-Fil',
                     Position=1,
                     Mandatory=$true,
@@ -238,7 +238,7 @@
                     ValueFromRemainingArguments=$false )]
         [Int32]
         $QueryTimeout=600,
-    
+
         [Parameter( Position=3,
                     Mandatory=$false,
                     ValueFromPipelineByPropertyName=$true,
@@ -246,7 +246,7 @@
         [ValidateSet("DataSet", "DataTable", "DataRow","PSObject","SingleValue")]
         [string]
         $As="PSObject",
-    
+
         [Parameter( Position=4,
                     Mandatory=$false,
                     ValueFromPipelineByPropertyName=$true,
@@ -279,7 +279,7 @@
         [Alias( 'Connection', 'Conn' )]
         [System.Data.SQLite.SQLiteConnection]
         $SQLiteConnection
-    ) 
+    )
 
     Begin
     {
@@ -296,9 +296,9 @@
                 }
             }
 
-        if ($PSBoundParameters.ContainsKey('InputFile')) 
-        { 
-            $filePath = $(Resolve-Path $InputFile).path 
+        if ($PSBoundParameters.ContainsKey('InputFile'))
+        {
+            $filePath = $(Resolve-Path $InputFile).path
             $Query =  [System.IO.File]::ReadAllText("$filePath")
             Write-Verbose "Extracted query from [$InputFile]"
         }
@@ -386,24 +386,24 @@
             else
             {
                 # Resolve the path entered for the database to a proper path name.
-                # This accounts for a variaty of possible ways to provide a path, but
+                # This accounts for a variety of possible ways to provide a path, but
                 # in the end the connection string needs a fully qualified file path.
-                if ($DB -match ":MEMORY:") 
+                if ($DB -match ":MEMORY:")
                 {
                     $Database = $DB
                 }
-                else 
+                else
                 {
-                    $Database = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DB)    
+                    $Database = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DB)
                 }
-                
+
                 if(Test-Path $Database)
                 {
                     Write-Verbose "Querying existing Data Source '$Database'"
                 }
                 else
                 {
-                    Write-Verbose "Creating andn querying Data Source '$Database'"
+                    Write-Verbose "Creating and querying Data Source '$Database'"
                 }
 
                 $ConnectionString = "Data Source={0}" -f $Database
@@ -414,7 +414,7 @@
 
                 Try
                 {
-                    $conn.Open() 
+                    $conn.Open()
                 }
                 Catch
                 {
@@ -433,7 +433,7 @@
                     ForEach-Object {
                         If ($_.Value -ne $null)
                         {
-                            if($_.Value -is [datetime]) { $_.Value = $_.Value.ToString("yyyy-MM-dd HH:mm:ss") }
+                            if($_.Value -is [datetime]) { $_.Value = $_.Value.ToString("yyyy-MM-dd HH:mm:ss.fff") }
                             $cmd.Parameters.AddWithValue("@$($_.Key)", $_.Value)
                         }
                         Else
@@ -442,10 +442,10 @@
                         }
                     } > $null
             }
-    
-            $ds = New-Object system.Data.DataSet 
+
+            $ds = New-Object system.Data.DataSet
             $da = New-Object System.Data.SQLite.SQLiteDataAdapter($cmd)
-    
+
             Try
             {
                 [void]$da.fill($ds)
@@ -456,7 +456,7 @@
                 $cmd.Dispose()
             }
             Catch
-            { 
+            {
                 $Err = $_
                 if($PSBoundParameters.Keys -notcontains "SQLiteConnection")
                 {
@@ -468,26 +468,18 @@
                     'Stop' {     Throw $Err }
                     'Continue' { Write-Error $Err}
                     Default {    Write-Error $Err}
-                }           
+                }
             }
 
             if($AppendDataSource)
             {
                 #Basics from Chad Miller
                 $Column =  New-Object Data.DataColumn
-                $Column.ColumnName = "Datasource"
+                $Column.ColumnName = "DataSource"
                 $ds.Tables[0].Columns.Add($Column)
 
-                Try
-                {
-                    #Someone better at regular expression, feel free to tackle this
-                    $Conn.ConnectionString -match "Data Source=(?<DataSource>.*);"
-                    $Datasrc = $Matches.DataSource.split(";")[0]
-                }
-                Catch
-                {
-                    $Datasrc = $DB
-                }
+                #Someone better at regular expression, feel free to tackle this
+                $Datasrc = [Regex]::Match($Conn.ConnectionString, "^Data Source=(?<DataSource>.*)$").Groups['DataSource'].Value
 
                 Foreach($row in $ds.Tables[0])
                 {
@@ -495,16 +487,16 @@
                 }
             }
 
-            switch ($As) 
-            { 
-                'DataSet' 
+            switch ($As)
+            {
+                'DataSet'
                 {
                     $ds
-                } 
+                }
                 'DataTable'
                 {
                     $ds.Tables
-                } 
+                }
                 'DataRow'
                 {
                     $ds.Tables[0]

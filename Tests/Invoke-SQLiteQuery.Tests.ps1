@@ -18,8 +18,8 @@ Remove-Item $SQLiteFile  -force -ErrorAction SilentlyContinue
 Copy-Item $PSScriptRoot\Names.SQLite $PSScriptRoot\Working.SQLite -force
 
 Describe "New-SQLiteConnection PS$PSVersion" {
-    
-    Context 'Strict mode' { 
+
+    Context 'Strict mode' {
 
         Set-StrictMode -Version latest
 
@@ -32,8 +32,8 @@ Describe "New-SQLiteConnection PS$PSVersion" {
 }
 
 Describe "Invoke-SQLiteQuery PS$PSVersion" {
-    
-    Context 'Strict mode' { 
+
+    Context 'Strict mode' {
 
         Set-StrictMode -Version latest
 
@@ -45,12 +45,12 @@ Describe "Invoke-SQLiteQuery PS$PSVersion" {
 
         It 'should take query input' {
             $Out = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "PRAGMA table_info(NAMES)" -ErrorAction Stop )
-            $Out.count | Should Be 4
+            $Out.count | Should Be 5
             $Out[0].Name | SHould Be "fullname"
         }
 
         It 'should support parameterized queries' {
-            
+
             $Out = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT * FROM NAMES WHERE BirthDate >= @Date" -SqlParameters @{
                 Date = (Get-Date 3/13/2012)
             } -ErrorAction Stop )
@@ -61,6 +61,12 @@ Describe "Invoke-SQLiteQuery PS$PSVersion" {
                 Date = (Get-Date 3/15/2012)
             } -ErrorAction Stop )
             $Out.count | Should Be 0
+        }
+
+        It 'should append data source path' {
+            $Out = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT [Test-(NonAlphaNumeric)] FROM NAMES" -AppendDataSource -ErrorAction Stop )
+            $Out.count | Should Be 1
+            $Out[0].DataSource | Should Be $SQLiteFile
         }
 
         It 'should use existing SQLiteConnections' {
@@ -76,10 +82,10 @@ Describe "Invoke-SQLiteQuery PS$PSVersion" {
         }
 
         It 'should respect PowerShell expectations for null' {
-            
+
             #The SQL folks out there might be annoyed by this, but we want to treat DBNulls as null to allow expected PowerShell operator behavior.
 
-            $Connection = New-SQLiteConnection -DataSource :MEMORY: 
+            $Connection = New-SQLiteConnection -DataSource :MEMORY:
             Invoke-SqliteQuery @Verbose -SQLiteConnection $Connection -Query "CREATE TABLE OrdersToNames (OrderID INT PRIMARY KEY, fullname TEXT);"
             Invoke-SqliteQuery @Verbose -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID, fullname) VALUES (1,'Cookie Monster');"
             Invoke-SqliteQuery @Verbose -SQLiteConnection $Connection -Query "INSERT INTO OrdersToNames (OrderID) VALUES (2);"
@@ -95,19 +101,20 @@ Describe "Invoke-SQLiteQuery PS$PSVersion" {
 
 Describe "Out-DataTable PS$PSVersion" {
 
-    Context 'Strict mode' { 
+    Context 'Strict mode' {
 
         Set-StrictMode -Version latest
 
         It 'should create a DataTable' {
-            
+
             $Script:DataTable = 1..1000 | %{
                 New-Object -TypeName PSObject -property @{
                     fullname = "Name $_"
                     surname = "Name"
                     givenname = "$_"
                     BirthDate = (Get-Date).Adddays(-$_)
-                } | Select fullname, surname, givenname, birthdate
+                    'Test-(NonAlphaNumeric)' = 'OK'
+                } | Select fullname, surname, givenname, birthdate, 'test-(nonalphanumeric)'
             } | Out-DataTable @Verbose
 
             $Script:DataTable.GetType().Fullname | Should Be 'System.Data.DataTable'
@@ -115,30 +122,31 @@ Describe "Out-DataTable PS$PSVersion" {
             $Columns = $Script:DataTable.Columns | Select -ExpandProperty ColumnName
             $Columns[0] | Should Be 'fullname'
             $Columns[3] | Should Be 'BirthDate'
+            $Columns[4] | Should Be 'Test-(NonAlphaNumeric)'
             $Script:DataTable.columns[3].datatype.fullname | Should Be 'System.DateTime'
-            
+
         }
     }
 }
 
 Describe "Invoke-SQLiteBulkCopy PS$PSVersion" {
 
-    Context 'Strict mode' { 
+    Context 'Strict mode' {
 
         Set-StrictMode -Version latest
 
         It 'should insert data' {
             Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -force
-            
+
             @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT fullname FROM NAMES WHERE surname = 'Name'" ).count | Should Be 1000
         }
         It "should adhere to ConflictCause" {
-            
+
             #Basic set of tests, need more...
 
             #Try adding same data
             { Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -force } | Should Throw
-            
+
             #Change a known row's prop we can test to ensure it does or does not change
             $Script:DataTable.Rows[0].surname = "Name 1"
             { Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -force } | Should Throw
@@ -147,7 +155,7 @@ Describe "Invoke-SQLiteBulkCopy PS$PSVersion" {
             $Result[0].surname | Should Be 'Name'
 
             { Invoke-SQLiteBulkCopy @Verbose -DataTable $Script:DataTable -DataSource $SQLiteFile -Table Names -NotifyAfter 100 -ConflictClause Rollback -Force } | Should Throw
-            
+
             $Result = @( Invoke-SQLiteQuery @Verbose -Database $SQLiteFile -Query "SELECT surname FROM NAMES WHERE fullname = 'Name 1'")
             $Result[0].surname | Should Be 'Name'
 
