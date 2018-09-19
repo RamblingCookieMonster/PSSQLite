@@ -153,7 +153,7 @@
         New-SQLiteConnection
 
     .LINK
-        Invoke-SQLiteBulkCopy
+        Invoke-SqliteBulkCopy
 
     .LINK
         Out-DataTable

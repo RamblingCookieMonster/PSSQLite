@@ -76,7 +76,7 @@ Insert large quantities of data quickly with transactions ([why?](http://www.sql
     } | Out-DataTable
 
 #Insert the data within a single transaction (SQLite is faster this way)
-    Invoke-SQLiteBulkCopy -DataTable $DataTable -DataSource $DataSource -Table Names -NotifyAfter 1000 -verbose
+    Invoke-SqliteBulkCopy -DataTable $DataTable -DataSource $DataSource -Table Names -NotifyAfter 1000 -verbose
 
 #View all the data!
     Invoke-SqliteQuery -DataSource $DataSource -Query "SELECT * FROM NAMES"
