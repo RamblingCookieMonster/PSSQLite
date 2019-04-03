@@ -138,7 +138,10 @@
         $Force,
 
         [Int32]
-        $QueryTimeout = 600
+        $QueryTimeout = 600,
+
+        [bool]
+        $Temp = $false
 
     )
 
@@ -202,22 +205,28 @@
             [string[]]$Parameters,
 
             [Parameter(ValueFromPipelineByPropertyName = $true)]
-            [string]$ConflictClause = ''
+            [string]$ConflictClause = '',
+
+            [Parameter()]
+            [bool]$Temp
         )
 
         Begin{
             $EscapeSingleQuote = "'","''"
             $Delimeter = ", "
-            $QueryTemplate = "INSERT{0} INTO {1} ({2}) VALUES ({3})"
+            if ($temp) {$QueryTemplate = "INSERT{0} INTO {1}{2} ({3}) VALUES ({4})"}
+            else {$QueryTemplate = "INSERT{0} INTO {1} ({2}) VALUES ({3})"}
         }
 
         Process{
             $fmtConflictClause = if($ConflictClause){" OR $ConflictClause"}
+            $fmtContext = "temp."
             $fmtTable = "'{0}'" -f ($Table -replace $EscapeSingleQuote)
             $fmtColumns = ($Columns | ForEach-Object { "'{0}'" -f ($_ -replace $EscapeSingleQuote) }) -join $Delimeter
             $fmtParameters = ($Parameters | ForEach-Object { "@$_"}) -join $Delimeter
 
-            $QueryTemplate -f $fmtConflictClause, $fmtTable, $fmtColumns, $fmtParameters
+            if ($temp) {$QueryTemplate -f $fmtConflictClause, $fmtContext, $fmtTable, $fmtColumns, $fmtParameters}
+            else {$QueryTemplate -f $fmtConflictClause, $fmtTable, $fmtColumns, $fmtParameters}
         }
     }
 
@@ -303,11 +312,11 @@
         #Build up the query
             if ($PSBoundParameters.ContainsKey('ConflictClause'))
             {
-                $Command.CommandText = New-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values -ConflictClause $ConflictClause
+                $Command.CommandText = New-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values -ConflictClause $ConflictClause -Temp $temp
             }
             else
             {
-                $Command.CommandText = New-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values
+                $Command.CommandText = New-SqliteBulkQuery -Table $Table -Columns $ColumnToParamHash.Keys -Parameters $ColumnToParamHash.Values -Temp $temp 
             }
 
             foreach ($Column in $Columns)
