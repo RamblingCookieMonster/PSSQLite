@@ -339,7 +339,25 @@
 
             Try
             {
-                Add-Type -TypeDefinition $cSharp -ReferencedAssemblies 'System.Data','System.Xml' -ErrorAction stop
+                if ($PSEdition -eq 'Core') 
+                {
+                    # Core doesn't auto-load these assemblies unlike desktop?
+                    # Not csharp coder, unsure why
+                    # by fffnite
+                    $Ref = @( 
+                            'System.Data.Common'
+                            'System.Management.Automation'
+                            'System.ComponentModel.TypeConverter'
+                            )
+                }
+                else 
+                {
+                    $Ref = @(
+                            'System.Data'
+                            'System.Xml'
+                            )
+                }
+                Add-Type -TypeDefinition $cSharp -ReferencedAssemblies $Ref -ErrorAction stop
             }
             Catch
             {
