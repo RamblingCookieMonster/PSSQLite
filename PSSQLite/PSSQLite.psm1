@@ -5,8 +5,14 @@
     }
 
 #Pick and import assemblies:
-    if([IntPtr]::size -eq 8) #64
+    if($IsLinux)
     {
+        write-verbose -message "is linux, loading"
+        $SQLiteAssembly = Join-path $PSScriptRoot "x64-core\System.Data.SQLite.dll"
+    }
+    elseif([IntPtr]::size -eq 8) #64
+    {
+        write-verbose -message "is x64, loading..."
         $SQLiteAssembly = Join-path $PSScriptRoot "x64\System.Data.SQLite.dll"
     }
     elseif([IntPtr]::size -eq 4) #32
