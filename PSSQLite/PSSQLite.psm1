@@ -5,9 +5,9 @@
     }
 
 #Pick and import assemblies:
-    if($IsLinux)
+    if($PSEdition -eq 'core')
     {
-        write-verbose -message "is linux, loading"
+        write-verbose -message "is PS Core, loading dotnet core dll"
         $SQLiteAssembly = Join-path $PSScriptRoot "x64-core\System.Data.SQLite.dll"
     }
     elseif([IntPtr]::size -eq 8) #64
