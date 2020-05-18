@@ -22,7 +22,7 @@ skip_commits:
 
 # PS2 compat
 install:
-  - cinst pester -y
+  - cinst pester -y --version=4.10.1
 
 # Package things up.
 build_script:
