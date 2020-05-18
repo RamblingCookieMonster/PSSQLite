@@ -4,13 +4,13 @@
 ModuleToProcess = 'PSSQLite.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.2'
+ModuleVersion = '1.1.0'
 
 # ID used to uniquely identify this module
 GUID = '381f3394-9b8a-492e-94b4-b3aa9e775761'
 
 # Author of this module
-Author = 'ramblingcookiemonster'
+Author = 'Warren Frame'
 
 # Company or vendor of this module
 CompanyName = ''
@@ -58,7 +58,7 @@ PowerShellVersion = '2.0'
 # NestedModules = @()
 
 # Functions to export from this module
-# FunctionsToExport = '*'
+FunctionsToExport = @('Invoke-SqliteBulkCopy', 'Invoke-SqliteQuery', 'New-SqliteConnection', 'Out-DataTable', 'Update-Sqlite')
 
 # Cmdlets to export from this module
 # CmdletsToExport = '*'
@@ -75,8 +75,20 @@ PowerShellVersion = '2.0'
 # List of all files packaged with this module
 # FileList = @()
 
-# Private data to pass to the module specified in RootModule/ModuleToProcess
-# PrivateData = ''
+# Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
+PrivateData = @{
+    PSData = @{
+        # Tags applied to this module. These help with module discovery in online galleries.
+        Tags = @('sql', 'sqlite', 'Query', 'Database')
+
+        # A URL to the license for this module.
+        LicenseUri = 'https://github.com/RamblingCookieMonster/PSSQLite/blob/master/LICENSE'
+
+        # A URL to the main website for this project.
+        ProjectUri = 'https://github.com/RamblingCookieMonster/PSSQLite'
+    } # End of PSData hashtable
+
+} # End of PrivateData hashtable
 
 # HelpInfo URI of this module
 # HelpInfoURI = ''
