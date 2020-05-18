@@ -5,8 +5,33 @@
     }
 
 #Pick and import assemblies:
-    if([IntPtr]::size -eq 8) #64
+    if($PSEdition -eq 'core')
     {
+	if($isLinux) {
+		write-verbose "loading linux-x64 core"
+		$SQLiteAssembly = Join-path $PSScriptRoot "core\linux-x64\System.Data.SQLite.dll"
+	}
+	
+	if ($isMacOS) {
+		write-verbose "loading mac-x64 core"
+		$SQLiteAssembly = Join-path $PSScriptRoot "core\osx-x64\System.Data.SQLite.dll"
+	}
+
+	if ($isWindows) {
+		if([IntPtr]::size -eq 8) { #64
+		write-verbose "loading win-x64 core"
+		$SQLiteAssembly = Join-path $PSScriptRoot "core\win-x64\System.Data.SQLite.dll"
+		}
+		elseif([IntPtr]::size -eq 4) { #32
+		write-verbose "loading win-x32 core"
+		$SQLiteAssembly = Join-path $PSScriptRoot "core\win-x86\System.Data.SQLite.dll"
+		}
+	}
+        write-verbose -message "is PS Core, loading dotnet core dll"
+    }
+    elseif([IntPtr]::size -eq 8) #64
+    {
+        write-verbose -message "is x64, loading..."
         $SQLiteAssembly = Join-path $PSScriptRoot "x64\System.Data.SQLite.dll"
     }
     elseif([IntPtr]::size -eq 4) #32
