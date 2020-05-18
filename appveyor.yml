@@ -1,14 +1,10 @@
 # See http://www.appveyor.com/docs/appveyor-yml for many more options
-os: Unstable
+os: Visual Studio 2015
 
 # Init variables for publishing to PowerShell Gallery or GitHub
 environment:
   ModuleName: $(APPVEYOR_PROJECT_NAME) # Hard code if you really need to...
-  Tags: 'SQL,SQLite,Database,Query' #comma separated list, e.g. 'tag1,tag2,tag3'
-  ReleaseNotes: 'Added UNC support'
-  LicenseUri: 'https://raw.githubusercontent.com/RamblingCookieMonster/PSSQLite/master/LICENSE'
-  ProjectUri: 'http://ramblingcookiemonster.github.io/SQLite-and-PowerShell/'
-  GitHubRelease: $(APPVEYOR_PROJECT_NAME)-v1.0.1 # TODO: extract version from PSD1...
+  GitHubRelease: $(APPVEYOR_PROJECT_NAME)-v1.1.0 # TODO: extract version from PSD1...
   NugetApiKey: # Add your API key to AppVeyor, paste the encrypted bit here
     secure: oqMFzG8F65K5l572V7VzlZIWU7xnSYDLtSXECJAAURrXe8M2+BAp9vHLT+1h1lR0
 
