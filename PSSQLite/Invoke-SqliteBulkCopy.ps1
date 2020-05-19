@@ -1,4 +1,4 @@
-﻿function Invoke-SQLiteBulkCopy {
+﻿function Invoke-SqliteBulkCopy {
 <#
 .SYNOPSIS
     Use a SQLite transaction to quickly insert data
@@ -48,7 +48,7 @@
         } | Out-DataTable
 
     #Copy the data in within a single transaction (SQLite is faster this way)
-        Invoke-SQLiteBulkCopy -DataTable $DataTable -DataSource $Database -Table Names -NotifyAfter 1000 -ConflictClause Ignore -Verbose 
+        Invoke-SqliteBulkCopy -DataTable $DataTable -DataSource $Database -Table Names -NotifyAfter 1000 -ConflictClause Ignore -Verbose 
         
 .INPUTS
     System.Data.DataTable
@@ -70,7 +70,7 @@
     New-SQLiteConnection
 
 .LINK
-    Invoke-SQLiteBulkCopy
+    Invoke-SqliteBulkCopy
 
 .LINK
     Out-DataTable
@@ -142,7 +142,7 @@
 
     )
 
-    Write-Verbose "Running Invoke-SQLiteBulkCopy with ParameterSet '$($PSCmdlet.ParameterSetName)'."
+    Write-Verbose "Running Invoke-SqliteBulkCopy with ParameterSet '$($PSCmdlet.ParameterSetName)'."
 
     Function CleanUp
     {
