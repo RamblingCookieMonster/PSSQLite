@@ -18,6 +18,9 @@
     .PARAMETER ReadOnly
         If specified, open SQLite data source as read only
 
+    .PARAMETER ConnectionStringOptions
+        Optional string to append custom options to the SQLite connection string. For example, use 'DateTimeFormat=JulianDay' to enable Julian day date handling.
+
     .PARAMETER Open
         We open the connection by default.  You can use this parameter to create a connection without opening it.
 
@@ -83,12 +86,18 @@
         [Switch]
         $ReadOnly,
 
-        [Parameter( Position=4,
-                    Mandatory=$false,
-                    ValueFromPipelineByPropertyName=$true,
-                    ValueFromRemainingArguments=$false )]
-        [bool]
-        $Open = $True
+    [Parameter( Position=4,
+            Mandatory=$false,
+            ValueFromPipelineByPropertyName=$true,
+            ValueFromRemainingArguments=$false )]
+    [string]
+    $ConnectionStringOptions,
+    [Parameter( Position=5,
+            Mandatory=$false,
+            ValueFromPipelineByPropertyName=$true,
+            ValueFromRemainingArguments=$false )]
+    [bool]
+    $Open = $True
     )
     Process
     {
@@ -115,7 +124,14 @@
             {
                 $ConnectionString += "Read Only=True;"
             }
-        
+            if ($ConnectionStringOptions) {
+                if ($ConnectionStringOptions.StartsWith(';')) {
+                    $ConnectionString += $ConnectionStringOptions
+                } else {
+                    $ConnectionString += ";$ConnectionStringOptions"
+                }
+            }
+            
             $conn = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
             $conn.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
             Write-Debug "ConnectionString $ConnectionString"
