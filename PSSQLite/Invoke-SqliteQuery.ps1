@@ -43,6 +43,9 @@
     .PARAMETER AppendDataSource
         If specified, append the SQLite data source path to PSObject or DataRow output
 
+    .PARAMETER ConnectionStringOptions
+        Optional string to append custom options to the SQLite connection string. For example, use 'DateTimeFormat=JulianDay' to enable Julian day date handling.
+
     .INPUTS 
         DataSource 
             You can pipe DataSource paths to Invoke-SQLiteQuery.  The query will execute against each Data Source.
@@ -278,7 +281,10 @@
                     ValueFromRemainingArguments=$false )]
         [Alias( 'Connection', 'Conn' )]
         [System.Data.SQLite.SQLiteConnection]
-        $SQLiteConnection
+        $SQLiteConnection,
+        [Parameter(Position=8, Mandatory=$false)]
+        [string]
+        $ConnectionStringOptions
     ) 
 
     Begin
@@ -421,10 +427,18 @@
                 }
                 else
                 {
-                    Write-Verbose "Creating andn querying Data Source '$Database'"
+                    Write-Verbose "Creating and querying Data Source '$Database'"
                 }
 
                 $ConnectionString = "Data Source={0}" -f $Database
+
+                if ($ConnectionStringOptions) {
+                    if ($ConnectionStringOptions.StartsWith(';')) {
+                        $ConnectionString += $ConnectionStringOptions
+                    } else {
+                        $ConnectionString += ";$ConnectionStringOptions"
+                    }
+                }
 
                 $conn = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
                 $conn.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!

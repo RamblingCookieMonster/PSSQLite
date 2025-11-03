@@ -23,6 +23,9 @@
 .PARAMETER SQLiteConnection
     An existing SQLiteConnection to use.  We do not close this connection upon completed query.
 
+.PARAMETER ConnectionStringOptions
+    Optional string to append custom options to the SQLite connection string. For example, use 'DateTimeFormat=JulianDay' to enable Julian day date handling. Do not include a leading semicolon; it will be added automatically if needed.
+
 .PARAMETER ConflictClause
     The conflict clause to use in case a conflict occurs during insert. Valid values: Rollback, Abort, Fail, Ignore, Replace
 
@@ -107,15 +110,23 @@
         [string]
         $DataSource,
 
-        [Parameter( ParameterSetName = 'Connection',
-                    Position=1,
-                    Mandatory=$true,
-                    ValueFromPipeline=$false,
-                    ValueFromPipelineByPropertyName=$true,
-                    ValueFromRemainingArguments=$false )]
-        [Alias( 'Connection', 'Conn' )]
-        [System.Data.SQLite.SQLiteConnection]
-        $SQLiteConnection,
+    [Parameter( ParameterSetName = 'Connection',
+            Position=1,
+            Mandatory=$true,
+            ValueFromPipeline=$false,
+            ValueFromPipelineByPropertyName=$true,
+            ValueFromRemainingArguments=$false )]
+    [Alias( 'Connection', 'Conn' )]
+    [System.Data.SQLite.SQLiteConnection]
+    $SQLiteConnection,
+
+    [Parameter( ParameterSetName = 'Datasource',
+            Position=2,
+            Mandatory=$false,
+            ValueFromPipelineByPropertyName=$true,
+            ValueFromRemainingArguments=$false )]
+    [string]
+    $ConnectionStringOptions,
 
         [parameter( Position=2,
                     Mandatory = $true)]
@@ -234,6 +245,13 @@
             }
 
             $ConnectionString = "Data Source={0}" -f $Database
+            if ($ConnectionStringOptions) {
+                if ($ConnectionStringOptions.StartsWith(';')) {
+                    $ConnectionString += $ConnectionStringOptions
+                } else {
+                    $ConnectionString += ";$ConnectionStringOptions"
+                }
+            }
             $SQLiteConnection = New-Object System.Data.SQLite.SQLiteConnection -ArgumentList $ConnectionString
             $SQLiteConnection.ParseViaFramework = $true #Allow UNC paths, thanks to Ray Alex!
         }
